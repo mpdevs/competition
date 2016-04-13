@@ -41,7 +41,7 @@ if __name__ == '__main__':
     for i in xrange(n):
         #x = "UPDATE item SET TaggedItemAttr='%s' "%(label.iloc[i].to_json(force_ascii=False))
         
-        sql = "UPDATE item SET TaggedItemAttr='%s',NeedReTag='n' WHERE ItemID=%s ; ".format(','.join([feature[j] for j in xrange(len(feature)) if label.iloc[i].values[j]==1]), str(int(ID[i])))
+        sql = "UPDATE item SET TaggedItemAttr='%s',NeedReTag='n' WHERE ItemID=%s ; "%(','.join([feature[j] for j in xrange(len(feature)) if label.iloc[i].values[j]==1]), str(int(ID[i])))
         cursor.execute(sql)  
         
         if i/1000.0 == i/1000 and i>0: 
