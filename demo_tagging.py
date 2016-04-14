@@ -11,7 +11,7 @@ if __name__ == '__main__':
     ###########################################################################
 
     # 词库文件列表，unix style pathname pattern
-    TAGLIST = u'dicts/*'
+    TAGLIST = u'dicts/women/*'
 
     # 互斥属性类型：以商品详情为准的标签类型 
     EXCLUSIVES = [u'领型',u'面料',u'袖款',u'袖长',u'腰型',u'厚薄',u"扣型"]
