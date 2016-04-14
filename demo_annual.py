@@ -121,11 +121,11 @@ for value in match:
         for j in todoindex:
             samilarity = WJacca(sparsem[i], sparsem[j], cut, pvalue)     
             if samilarity > jaccavalue[1]:
-                judge = 1
-            elif samilarity < jaccavalue[0]:
-                judge = 3
-            else:
                 judge = 2
+            elif samilarity < jaccavalue[0]:
+                judge = 0
+            else:
+                judge = 1
             #写入到数据库
             cur1.execute("INSERT INTO itemrelation(SourceItemID,TargetItemID,RelationType,Status) VALUES('%d','%d','%d','1')"%(itemid[i], itemid[j], judge))
 
