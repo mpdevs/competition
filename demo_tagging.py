@@ -35,40 +35,43 @@ if __name__ == '__main__':
 
     print '{} Loading data ...'.format(datetime.now())
     data = pd.read_sql_query(query, conn)
-    ID = data['ItemID']
 
-    print '{} Start tagging brands ...'.format(datetime.now())
-    data = tagging_ali_brands(data, BRANDSLIST)
-    brand = data.iloc[:,4]# 存的是品牌
-    #data.to_csv('output.csv', encoding='utf-8', index=False, float_format='%f')
+    if len(data) > 0:
+        
+        ID = data['ItemID']
 
-    print '{} Start tagging feature ...'.format(datetime.now())
-    data = tagging_ali_items(data, TAGLIST, EXCLUSIVES)
-    label = data.iloc[:,5:]# 存的是0-1标签
-    feature = label.columns# 存的是0-1标签对应的列名
+        print '{} Start tagging brands ...'.format(datetime.now())
+        data = tagging_ali_brands(data, BRANDSLIST)
+        brand = data.iloc[:,4]# 存的是品牌
+        #data.to_csv('output.csv', encoding='utf-8', index=False, float_format='%f')
 
-    print u'{} 开始写入...'.format(datetime.now())
-    cursor = conn.cursor()
+        print '{} Start tagging feature ...'.format(datetime.now())
+        data = tagging_ali_items(data, TAGLIST, EXCLUSIVES)
+        label = data.iloc[:,5:]# 存的是0-1标签
+        feature = label.columns# 存的是0-1标签对应的列名
 
-    print u'共%d条数据 ...'%len(data.index)
-    for i in tqdm(xrange(len(data.index))):
+        print u'{} 开始写入...'.format(datetime.now())
+        cursor = conn.cursor()
 
-        sql = """UPDATE item SET TaggedItemAttr="%s",NeedReTag='n',TaggedBrandName="%s" WHERE ItemID=%d ; """%(','.join(feature[label.iloc[i].values==1]), brand[i], int(ID[i]))#更新0-1标签和品牌
+        print u'共%d条数据 ...'%len(data.index)
+        for i in tqdm(xrange(len(data.index))):
 
-        '''
-        sql = """
-            UPDATE item SET TaggedBrandName="%s" WHERE ItemID=%d ;
-        """%(brand[i], int(ID[i]))#只更新品牌
-        '''
-        try:
-            cursor.execute(sql)
-        except Exception, e:
-            print 'Get an error where Line = %d ItemID = %d'%(i,int(ID[i]))
-        # if i/1000 == i/1000.0 and i>0:
-        #     print u"已处理%d条..."%i
+            sql = """UPDATE item SET TaggedItemAttr="%s",NeedReTag='n',TaggedBrandName="%s" WHERE ItemID=%d ; """%(','.join(feature[label.iloc[i].values==1]), brand[i], int(ID[i]))#更新0-1标签和品牌
 
-    conn.commit()
-    conn.close()
-    print u'{} 写入完成!'.format(datetime.now())
+            '''
+            sql = """
+                UPDATE item SET TaggedBrandName="%s" WHERE ItemID=%d ;
+            """%(brand[i], int(ID[i]))#只更新品牌
+            '''
+            try:
+                cursor.execute(sql)
+            except Exception, e:
+                print 'Get an error where Line = %d ItemID = %d'%(i,int(ID[i]))
+            # if i/1000 == i/1000.0 and i>0:
+            #     print u"已处理%d条..."%i
+
+        conn.commit()
+        conn.close()
+        print u'{} 写入完成!'.format(datetime.now())
 
 
