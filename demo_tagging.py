@@ -7,6 +7,12 @@ import pandas as pd
 from tagging import tagging_ali_items, tagging_ali_brands
 
 
+
+
+
+
+
+
 if __name__ == '__main__':
 
     ###########################################################################
