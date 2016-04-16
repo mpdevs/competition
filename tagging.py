@@ -4,23 +4,25 @@ import pandas as pd
 from numpy import array_split
 from glob import glob
 from multiprocessing import Pool
+from datetime import datetime
+import itertools as it
 from tqdm import tqdm
 
-def tagging_ali_items(file_or_frame, tag_list, exclusives, 
+def tagging_ali_items(file_or_frame, tag_list, exclusives,
     nrows=None, sep=',', processes=None):
     """
     Tags a table by Title and Attribute column with given tag list.
-    
+
     Parameters
     ----------
     file_or_frame: csv file path or pandas DataFrame object.
     tag_list: unix style pathname pattern.
-    exclusives: 
+    exclusives:
     nrows: number of rows to read from file or DataFrame.
     sep: Dilimiter to use.
     processes: processes to use for multiprocessing. By default equivalent
     to number of processers.
-    
+
     """
     # load data
     if isinstance(file_or_frame, pd.DataFrame):
@@ -30,7 +32,7 @@ def tagging_ali_items(file_or_frame, tag_list, exclusives,
         data = pd.read_csv(file_or_frame, nrows=nrows, sep=sep)
         # filename = file_or_frame.replace('\\','/').split('/')[-1][:-4]
     # load tag files
-    tags = glob(tag_list) 
+    tags = glob(tag_list)
     # seperate exclusive and non-exclusive tags
     x_tag_dict = {tag_type: [tag for tag in tags if tag_type in tag]
                   for tag_type in exclusives}
@@ -66,13 +68,57 @@ def tagging_ali_items(file_or_frame, tag_list, exclusives,
     col = data['Attribute'].fillna('\t') + data['Title'].fillna('\t')
     df_nx_tags = tagging(col, nx_tags, processes=processes)
 
-    return pd.concat([data, df_nx_tags, df_x_tags], 
+    return pd.concat([data, df_nx_tags, df_x_tags],
+                     axis=1, join_axes=[data.index])
+
+def tagging_ali_brands(file_or_frame, brands_list,
+    nrows=None, sep=',', processes=None):
+    """
+    Tags a table by Title and Attribute column with given tag list.
+
+    Parameters
+    ----------
+    file_or_frame: csv file path or pandas DataFrame object.
+    tag_list: unix style pathname pattern.
+    nrows: number of rows to read from file or DataFrame.
+    sep: Dilimiter to use.
+    processes: processes to use for multiprocessing. By default equivalent
+    to number of processers.
+
+    """
+    # load data
+    if isinstance(file_or_frame, pd.DataFrame):
+        data = file_or_frame
+        # filename = 't'
+    else:
+        data = pd.read_csv(file_or_frame, nrows=nrows, sep=sep)
+    # load tag files
+    tags = glob(brands_list)
+    tags.sort()
+    BRAND = pd.DataFrame([0]*len(data),columns=['Brand'])
+    #for tag_type, tags in x_tag_dict.iteritems():
+    df_x_tags_ST = tagging(data['ShopNameTitle'], tags, processes=processes)
+    pinpai_from_attribute = pd.DataFrame([0]*len(data))
+    for i, x in enumerate(data['Attribute']):
+        temp = x.find(u'品牌:')
+        if temp != -1:
+            pinpai_from_attribute.iloc[i] = x[temp+3:x.find(',',temp+3)]
+    df_x_tags_attribute = tagging(pinpai_from_attribute[0], tags, processes=processes)
+
+    temp = range(len(tags)-1,0,-1)
+    print u'{} Start switching ...'.format(datetime.now())
+    for i, t in tqdm(enumerate(df_x_tags_attribute.sum(axis=1))):
+        if t != 0:
+            BRAND.iloc[i] = tags[next(j for j,v in it.izip(temp, reversed(df_x_tags_attribute.iloc[i])) if v == 1)].replace('\\','/').split('/')[-1][:-4]
+        elif sum(df_x_tags_ST.iloc[i]) > 0:
+            BRAND.iloc[i] = tags[next(j for j,v in it.izip(temp, reversed(df_x_tags_ST.iloc[i])) if v == 1)].replace('\\','/').split('/')[-1][:-4]
+    return pd.concat([data, BRAND],
                      axis=1, join_axes=[data.index])
 
 def tagging(col, tags, split=10000, binary=True, processes=None):
     """
     Tags a pandas Series object by a list of tag files.
-    
+
     Parameters
     ----------
     col: a pandas Series object.
@@ -94,11 +140,11 @@ def tagging(col, tags, split=10000, binary=True, processes=None):
     binary_list = [binary] * indices
     result = pool.map(tagging_core, zip(col_list, tags_list, binary_list))
     pool.close()
-    pool.join()   
+    pool.join()
     return pd.concat(result)
 
 def tagging_core(col_tag_binary):
-    
+
     # 为了配合pool.map函数，只能传入一个参数
     col = col_tag_binary[0]                  # pandas series object
     tags = col_tag_binary[1]                 # tag list
@@ -118,7 +164,7 @@ def tagging_core(col_tag_binary):
             reg = '|'.join(
                 [w.strip('\t\n\r') for w in f if w !='']).decode('utf-8')
             matchs = col.str.contains(reg)
-            
+
             if binary:
                 df[tag_name] = matchs
             else:
@@ -128,6 +174,7 @@ def tagging_core(col_tag_binary):
             error_tag_files.append(t)
     if len(error_tag_files) > 0:
         print u"""
-        无法读取以下词库文件，请确保文件编码被设置为UTF-8格式。\n\n***\n\n{}
+        无法读取以下词库文件，请转码UTF-8后再次尝试。\n\n***\n\n{}
         """.format('\n'.join(error_tag_files))
-    return df.fillna(0) * 1 if binary else df                    
+        raise SystemExit()
+    return df.fillna(0) * 1 if binary else df

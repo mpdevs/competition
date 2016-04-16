@@ -1,0 +1,2 @@
+gnn
+[^zhan]gnn[^n]
