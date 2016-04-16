@@ -37,7 +37,7 @@ if __name__ == '__main__':
     data = pd.read_sql_query(query, conn)
 
     if len(data) > 0:
-        
+
         ID = data['ItemID']
 
         print '{} Start tagging brands ...'.format(datetime.now())
@@ -74,4 +74,5 @@ if __name__ == '__main__':
         conn.close()
         print u'{} 写入完成!'.format(datetime.now())
 
-
+    else:
+        print "item数据已打标签"
