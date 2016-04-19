@@ -6,7 +6,7 @@ def getcut(important, unimportant, head):
     print 'Can not find:'
     for x in important:
         cut1.append([])
-        for i in range(len(head)):
+        for i in xrange(len(head)):
             if head[i].find(x)+1:
                 cut1[-1].append(i)
         if len(cut1[-1]) == 0:
@@ -15,13 +15,13 @@ def getcut(important, unimportant, head):
     cut2 = []
     for x in unimportant:
         cut2.append([])
-        for i in range(len(head)):
+        for i in xrange(len(head)):
             if head[i].find(x)+1:
                 cut2[-1].append(i)
         if len(cut2[-1]) == 0:
             del cut2[-1]
             print x
-               
+              
     return [cut1] + [cut2]
 
     
@@ -40,9 +40,9 @@ def WJacca(x, y, cut, weights):
     
     w = []
     temp = True
-    for i in range(len(cut)):
+    for i in xrange(len(cut)):
         w.append([])
-        for j in range(len(cut[i])):
+        for j in xrange(len(cut[i])):
             if sum(x[cut[i][j]]) == 0 or sum(y[cut[i][j]]) == 0:
                 w[i].append(0)
             else:
@@ -51,13 +51,15 @@ def WJacca(x, y, cut, weights):
     if temp:
         return 0
     temp = 0.0
-    t = []
-    for i in range(len(w)):
-        t.append(w[i].count(1))
     for i in xrange(len(w)):
+        tt = sum(w[i])
+        if tt == 0:
+            continue
+        else:
+            t = weights[i]/tt
         for j in xrange(len(w[i])):
             if w[i][j] != 0:
-                temp += weights[i]/t[i] * Jaca(x[cut[i][j]],y[cut[i][j]])
+                temp += t * Jaca(x[cut[i][j]],y[cut[i][j]])
     return temp
 
 
