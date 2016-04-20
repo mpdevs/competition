@@ -138,6 +138,9 @@ def process_annual(industry):
     #开始寻找竞品
     for value in shops:
 
+        cursor_industry.execute("delete from itemrelation where shopid = %d"%value)
+        connect_industry.commit()
+        print u'删除店铺%d数据'%value
 
         print datetime.now(),u'正在计算ShopID=%d ...'%value
 
