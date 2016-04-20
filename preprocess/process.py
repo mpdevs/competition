@@ -102,10 +102,7 @@ def process_annual(industry):
     cursor_portal.execute('SELECT CategoryID,CategoryName,ParentID FROM category;')
     categories = cursor_portal.fetchall()
 
-    # category_id_dict = {str(_[0]):{'category_id':str(_[0]), 'category_name':_[1], 'parent_id':_[2] } for _ in categories}
-    dict_cid = [int(x[0]) for x in categories]
-    dict_cname = [x[1] for x in categories]
-    dict_par = [x[2] for x in categories]
+    category_id_dict = {str(_[0]):{'category_id':str(_[0]), 'category_name':_[1], 'parent_id':_[2] } for _ in categories}
 
 
 
@@ -152,75 +149,29 @@ def process_annual(industry):
         label = parser_label([_[0] for _ in items], dict_head)
 
         insert_items = []
+        #对每个商品找竞品
+        for i, item in enumerate(tqdm(items)):
+            item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
 
-        itemid = [int(x[1]) for x in items]
-        price = [float(x[2]) for x in items]
-        CategoryID = [int(x[3]) for x in items]
-        error_category = []
-
-        for i in tqdm(xrange(len(itemid))):
-
-            if price[i] == 0: continue
-
-            cid = CategoryID[i]
+            if price == 0: continue
 
             #Find important dimension
-            cidcid = cid
-            flag = 1
-            flagflag = 0
-            while flag:
-                try:
-                    tempindex = dict_cid.index(cidcid)
-                except:
-                    error_category.append(cid)
-                    flagflag = 1
-                    break
-                cname = dict_cname[tempindex]
-                #print cname
-                for j, x in enumerate(dict_imp_name):
-                    if cname in x:
-                        important = dict_imp_value[j]
-                        flag = 0
-                        break
-                if flag == 1:
-                    try:
-                        cidcid = dict_cid.index(dict_par[tempindex])
-                    except:
-                        error_category.append(cid)
-                        flagflag = 1
-                        flag = 0
+            def find_important(category_id):
+                important = None
+                if category_id_dict.has_key(category_id):
+                    category_name = category_id_dict[category_id]['category_name']
+                    for j, x in enumerate(dict_imp_name):
+                        if category_name in x:
+                            important = dict_imp_value[j]
+                            return important
+                    if not important:
+                        parent_id = category_id_dict[category_id]['parent_id']
+                        if parent_id is not None:
+                            important = find_important(str(parent_id))
+                return important
 
-
-
-
-            if flagflag:
-                continue
-
-
-        # #对每个商品找竞品
-        # for item in tqdm(items):
-        #
-        #     item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
-        #
-        #     if price == 0: continue
-        #
-        #     #Find important dimension
-        #     def find_important(category_id):
-        #         important = None
-        #         if category_id_dict.has_key(category_id):
-        #             category_name = category_id_dict[category_id]['category_name']
-        #             for j, x in enumerate(dict_imp_name):
-        #                 if category_name in x:
-        #                     important = dict_imp_value[j]
-        #                     return important
-        #             if not important:
-        #                 parent_id = category_id_dict[category_id]['parent_id']
-        #                 if parent_id is not None:
-        #                     important = find_important(str(parent_id))
-        #         return important
-        #
-        #     important = find_important(category_id)
-        #     if important is None: continue
+            important = find_important(category_id)
+            if important is None: continue
 
 
             #得到不重要的维度
@@ -228,16 +179,11 @@ def process_annual(industry):
             cut = getcut(important, unimportant, head)
 
 
-            # minprice = price * (1-setprecetage)
-            # maxprice = price * (1+setprecetage)
-
-
-            minprice = price[i] * (1-setprecetage)
-            maxprice = price[i] * (1+setprecetage)
-
+            minprice = price * (1-setprecetage)
+            maxprice = price * (1+setprecetage)
 
             # #找到所有价格段内的同品类商品
-            todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == cid) & (all_data.shopid != value[0]) ]
+            todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.shopid != value[0]) ]
 
             if len(todo_data)==0:continue
 
@@ -251,9 +197,7 @@ def process_annual(industry):
                 judge = 2 if samilarity > jaccavalue[1] else 1
 
                 if judge > 0:
-                    # insert_item = (item_id, todo_id[j], judge, 1)
-                    insert_item = (itemid[i], todo_id[j], judge, 1)
-
+                    insert_item = (item_id, todo_id[j], judge, 1)
                     insert_items.append(insert_item)
 
         if len(insert_items) > 0:
