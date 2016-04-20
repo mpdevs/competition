@@ -1,4 +1,0 @@
-Mix Geora
-mix geora
-MixGeora
-mixgeora
