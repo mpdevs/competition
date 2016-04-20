@@ -289,6 +289,7 @@ def process_annual(industry):
     print '找本店商品耗时{0},计算相似度耗时{1},找竞品耗时{2},入库耗时{3}'.format(str(s1+float(m1)/1000000), str(s2+float(m2)/1000000), str(s3+float(m3)/1000000), str(s4+float(m4)/1000000))
     print datetime.now()
 
+
 def process_annual_test(industry):
     # print 'begin'
     # dd1 = datetime.now()
@@ -362,6 +363,8 @@ def process_annual_test(industry):
         ('%s','%s','%s','%s')
         """
 
+    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid FROM mp_women_clothing.item WHERE ShopID!={} AND TaggedItemAttr IS NOT NULL;".format(value[0]), connect_industry)
+    
     #开始寻找竞品
     for value in shops:
 
@@ -437,8 +440,7 @@ def process_annual_test(industry):
 
             d5 = datetime.now()
             # #找到所有价格段内的同品类商品
-            cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid FROM mp_women_clothing.item WHERE ShopID!={} AND CategoryID={} AND DiscountPrice>{} AND DiscountPrice<{} AND TaggedItemAttr IS NOT NULL;".format(value[0], cid, minprice, maxprice))
-            tododata = cursor_industry.fetchall()
+            tododata = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == cid) ]
 
             d6 = datetime.now()
             s3 += (d6-d5).seconds
@@ -448,8 +450,8 @@ def process_annual_test(industry):
             if len(tododata)==0:continue
 
 
-            todoid = [int(x[1]) for x in tododata]
-            todolabel = parser_label([x[0] for x in tododata], dict_head)
+            todoid = todata.itemid
+            todolabel = parser_label(tododata.label, dict_head)
 
 
 
