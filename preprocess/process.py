@@ -102,9 +102,12 @@ def process_annual(industry):
     cursor_portal.execute('SELECT CategoryID,CategoryName,ParentID FROM category;')
     categories = cursor_portal.fetchall()
 
+    # category_id_dict = {str(_[0]):{'category_id':str(_[0]), 'category_name':_[1], 'parent_id':_[2] } for _ in categories}
     dict_cid = [int(x[0]) for x in categories]
     dict_cname = [x[1] for x in categories]
     dict_par = [x[2] for x in categories]
+
+
 
     #定义重要维度
     important_attr = IMPORTANT_ATTR_ENUM[industry]
@@ -124,8 +127,6 @@ def process_annual(industry):
     for i in xrange(len(head)):
         dict_head[head[i]] = i
 
-    error_category = []
-
     insert_sql = """
         INSERT INTO itemrelation(SourceItemID,TargetItemID,RelationType,Status)
         VALUES
@@ -136,7 +137,7 @@ def process_annual(industry):
     shops = cursor_portal.fetchall()
 
     all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM mp_women_clothing.item WHERE  TaggedItemAttr IS NOT NULL;", connect_industry)
-    
+
     #开始寻找竞品
     for value in shops:
 
@@ -148,15 +149,15 @@ def process_annual(industry):
 
         if len(items)==0: continue
 
-        label = parser_label([x[0] for x in items], dict_head)
+        label = parser_label([_[0] for _ in items], dict_head)
+
+        insert_items = []
+
         itemid = [int(x[1]) for x in items]
         price = [float(x[2]) for x in items]
         CategoryID = [int(x[3]) for x in items]
+        error_category = []
 
-
-
-        insert_items = []
-        #对每个商品找竞品
         for i in tqdm(xrange(len(itemid))):
 
             if price[i] == 0: continue
@@ -188,34 +189,71 @@ def process_annual(industry):
                         error_category.append(cid)
                         flagflag = 1
                         flag = 0
+
+
+
+
             if flagflag:
                 continue
+
+
+        # #对每个商品找竞品
+        # for item in tqdm(items):
+        #
+        #     item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
+        #
+        #     if price == 0: continue
+        #
+        #     #Find important dimension
+        #     def find_important(category_id):
+        #         important = None
+        #         if category_id_dict.has_key(category_id):
+        #             category_name = category_id_dict[category_id]['category_name']
+        #             for j, x in enumerate(dict_imp_name):
+        #                 if category_name in x:
+        #                     important = dict_imp_value[j]
+        #                     return important
+        #             if not important:
+        #                 parent_id = category_id_dict[category_id]['parent_id']
+        #                 if parent_id is not None:
+        #                     important = find_important(str(parent_id))
+        #         return important
+        #
+        #     important = find_important(category_id)
+        #     if important is None: continue
+
 
             #得到不重要的维度
             unimportant = list(set(fl) ^ set(important))
             cut = getcut(important, unimportant, head)
 
+
+            # minprice = price * (1-setprecetage)
+            # maxprice = price * (1+setprecetage)
+
+
             minprice = price[i] * (1-setprecetage)
             maxprice = price[i] * (1+setprecetage)
 
+
             # #找到所有价格段内的同品类商品
-            tododata = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == cid) & (all_data.shopid != value[0]) ]
+            todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == cid) & (all_data.shopid != value[0]) ]
 
-
-            if len(tododata)==0:continue
-
-            todoid = tododata['itemid']
-            todolabel = parser_label(list(tododata['label']), dict_head)
+            if len(todo_data)==0:continue
 
             #计算相似度
-            for j in xrange(len(todoid)):
-                samilarity = WJacca(label[i], todolabel[j], cut, pvalue)
-                if samilarity > jaccavalue[1]: judge = 2
-                elif samilarity < jaccavalue[0]:judge = 0
-                else: judge = 1
+            todo_id = todo_data['itemid'].values
+            todo_label = parser_label(list(todo_data['label']), dict_head)
+            for j in xrange(len(todo_id)):
+                samilarity = WJacca(label[i], todo_label[j], cut, pvalue)
 
-                if judge>0:
-                    insert_item = (itemid[i], todoid.iloc[j], judge, 1)
+                if samilarity < jaccavalue[0]: continue
+                judge = 2 if samilarity > jaccavalue[1] else 1
+
+                if judge > 0:
+                    # insert_item = (item_id, todo_id[j], judge, 1)
+                    insert_item = (itemid[i], todo_id[j], judge, 1)
+
                     insert_items.append(insert_item)
 
         if len(insert_items) > 0:
