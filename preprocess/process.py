@@ -125,9 +125,9 @@ def process_annual(industry):
         dict_head[head[i]] = i
 
     insert_sql = """
-        INSERT INTO itemrelation(SourceItemID,TargetItemID,RelationType,Status)
+        INSERT INTO itemrelation(SourceItemID,TargetItemID,RelationType,Status,ShopId)
         VALUES
-        ('%s',%s,'%s','%s')
+        ('%s',%s,'%s','%s', %s)
         """
 
     cursor_portal.execute('SELECT ShopID FROM shop;')
@@ -140,6 +140,7 @@ def process_annual(industry):
 
         cursor_industry.execute("delete from itemrelation where shopid = %d"%value)
         connect_industry.commit()
+
         print u'删除店铺%d数据'%value
 
         print datetime.now(),u'正在计算ShopID=%d ...'%value
@@ -200,7 +201,8 @@ def process_annual(industry):
                 judge = 2 if samilarity > jaccavalue[1] else 1
 
                 if judge > 0:
-                    insert_item = (item_id, todo_id[j], judge, 1)
+                    insert_item = (item_id, todo_id[j], judge, 1, str(value[0]))
+
                     insert_items.append(insert_item)
 
         if len(insert_items) > 0:
