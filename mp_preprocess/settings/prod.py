@@ -5,6 +5,7 @@ __author__ = 'Dragon'
 from common import *
 
 
-host=''
-user=''
-passwd=''
+host='192.168.1.120'
+user='admin'
+pwd='Marc@2016'
+
