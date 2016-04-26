@@ -6,6 +6,8 @@ from tqdm import tqdm
 from glob import glob
 from datetime import datetime
 import pandas as pd
+import numpy as np
+from math import ceil
 
 from tag_process import tagging_ali_items, tagging_ali_brands
 
@@ -39,46 +41,44 @@ def process_tag(industry, table_name):
             ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle
             FROM %s WHERE NeedReTag='y';
             """%(table_name)
-
+    
+    update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr="%s", NeedReTag="n", TaggedBrandName="%s" WHERE ItemID=%s ;"""
+    
     print '{} Loading data ...'.format(datetime.now())
-    data = pd.read_sql_query(query, connect)
-
-    if len(data) > 0:
-
-        print '{} Start tagging brands ...'.format(datetime.now())
-        data = tagging_ali_brands(data, BRANDSLIST)
-        brand = data.iloc[:,4]             # 存的是品牌
-
-
-        print '{} Start tagging feature ...'.format(datetime.now())
-        data = tagging_ali_items(data, TAGLIST, EXCLUSIVES)
-        label = data.iloc[:,5:]            # 存的是0-1标签
-        feature = label.columns            # 存的是0-1标签对应的列名
-
-        print u'{} 开始写入...'.format(datetime.now())
+    data = pd.read_sql_query(query, connect) 
+    
+    n = len(data)
+    if n > 0:       
+        batch = 10000        
+        print u'Total number of data: {}, batch_size = {}'.format(n, batch)
+        
         cursor = connect.cursor()
-
-        print u'共%d条数据 ...'%len(data.index)
-        ID = data['ItemID']
-        for i in tqdm(xrange(len(data.index))):
-            #更新0-1标签和品牌
-            update_sql = """
-                UPDATE %s SET TaggedItemAttr="%s",
-                NeedReTag='n',TaggedBrandName="%s"
-                WHERE ItemID=%d ;
-                """%(table_name, ','.join(feature[label.iloc[i].values==1]), brand[i], int(ID[i]))
-            try:
-                cursor.execute(update_sql)
-            except Exception, e:
-                print 'Get an error where Line = %d ItemID = %d'%(i,int(ID[i]))
-
-
-        connect.commit()
+        for j in xrange(int(ceil(float(len(data))/batch))):
+            print '{} Start batch {}'.format(datetime.now(), j+1)
+            batch_data = data.iloc[j*batch:min((j+1)*batch, n)]
+            
+            print '{} Tagging brands ...'.format(datetime.now())            
+            brand = tagging_ali_brands(batch_data, BRANDSLIST)
+            
+            print '{} Tagging feature ...'.format(datetime.now())
+            label= tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)# 0-1 label          
+            
+            
+            print u'{} Zipping data ...'.format(datetime.now())
+            feature = label.columns
+            label = label.values
+            ID = map(int, batch_data['ItemID'].values)  
+            update_items = zip([','.join(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
+            
+            print u'{} Writing this batch to database ...'.format(datetime.now())
+            cursor.executemany(update_sql, update_items)
+            connect.commit()
+        
         connect.close()
-        print u'{} 写入完成!'.format(datetime.now())
+        print u'{} Done!'.format(datetime.now())
 
     else:
-        print u'%s数据已全部打标签!'%table_name
+        print u'Data in %s had been tagged!'%table_name
 
 
 

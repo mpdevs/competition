@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import re
 import pandas as pd
 import itertools as it
 from numpy import array_split
@@ -38,23 +39,24 @@ def tagging_ali_items(file_or_frame, tag_list, exclusives, nrows=None, sep=',', 
         else:
             raise SystemExit(u'好的。再见。')
 
-    print u'标记互斥属性'
+    #print u'标记互斥属性'
     df_x_tags = pd.DataFrame()
     for tag_type, tags in x_tag_dict.iteritems():
-        print tag_type
-        df_x_tags_title = tagging(data['Title'], tags, processes=processes)
-        df_x_tags_attribute = tagging(data['Attribute'], tags, processes=processes)
+        #print tag_type
+        df_x_tags_title = tagging(data['Title'], tags, 'items', processes=processes)
+        df_x_tags_attribute = tagging(data['Attribute'], tags, 'items', processes=processes)
 
         mask_na_att = (df_x_tags_attribute.sum(axis=1) == 0)
         df_x_tags_attribute[mask_na_att] = df_x_tags_title[mask_na_att]
 
         df_x_tags = pd.concat([df_x_tags, df_x_tags_attribute], axis=1)     # 当exclusives 为空时，返回空表
 
-    print u'标记非互斥属性'
+    #print u'标记非互斥属性'
     col = data['Attribute'].fillna('\t') + data['Title'].fillna('\t')
-    df_nx_tags = tagging(col, nx_tags, processes=processes)
+    df_nx_tags = tagging(col, nx_tags, 'items', processes=processes)
 
-    return pd.concat([data, df_nx_tags, df_x_tags], axis=1, join_axes=[data.index])
+    return pd.concat([df_nx_tags, df_x_tags], axis=1, join_axes=[data.index])
+    #return pd.concat([data, df_nx_tags, df_x_tags], axis=1, join_axes=[data.index])
 
 
 def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processes=None):
@@ -67,33 +69,55 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
     :param processes:       processes to use for multiprocessing. By default equivalent to number of processers.
     :return: pd.concat
     """
-
+    
     data = file_or_frame if isinstance(file_or_frame, pd.DataFrame) else pd.read_csv(file_or_frame, nrows=nrows, sep=sep)
     tags = glob(brands_list)
-    tags.sort()
-    BRAND = pd.DataFrame([0]*len(data),columns=['Brand'])
-
-    df_x_tags_ST = tagging(data['ShopNameTitle'], tags, processes=processes)
-    pinpai_from_attribute = pd.DataFrame([0]*len(data))
+    tags.sort(reverse = True)
+           
+    BRAND = []
+    pinpai_from_attribute= []
     for i, x in enumerate(data['Attribute']):
         temp = x.find(u'品牌:')
         if temp != -1:
-            pinpai_from_attribute.iloc[i] = x[temp+3:x.find(',',temp+3)]
-
-    df_x_tags_attribute = tagging(pinpai_from_attribute[0], tags, processes=processes)
-
-    temp = range(len(tags)-1,0,-1)
-
-    print u'{} Start switching ...'.format(datetime.now())
-    for i, t in tqdm(enumerate(df_x_tags_attribute.sum(axis=1))):
-
-        if t == 0 and sum(df_x_tags_ST.iloc[i]) == 0: continue
-
-        reversed_tags = df_x_tags_attribute.iloc[i] if t != 0 else df_x_tags_ST.iloc[i]
-        BRAND.iloc[i] = tags[next(j for j,v in it.izip(temp, reversed(reversed_tags)) if v == 1)].replace('\\','/').split('/')[-1][:-4]
-
-    return pd.concat([data, BRAND], axis=1, join_axes=[data.index])
-
+            pinpai_from_attribute.append(x[temp+3:x.find(u'，',temp+3)])
+        else:
+            pinpai_from_attribute.append(0)
+    
+    tag_name = []
+    reg = []
+    error_tag_files = []
+    for t in tags:
+        tag_name.append(t.replace('\\','/').split('/')[-1][:-4])
+        try:
+            f = open(t, 'r')
+            reg.append(re.compile('|'.join(list(set([w.strip('\t\n\r') for w in f if w != ''])))))
+            #reg.append([w.strip('\t\n\r') for w in f if w != ''])
+        except UnicodeDecodeError, e:
+            error_tag_files.append(t)
+    if len(error_tag_files) > 0:
+        print u"""
+            无法读取以下词库文件，请转码UTF-8后再次尝试。\n\n***\n\n{}
+            """.format('\n'.join(error_tag_files))
+        raise SystemExit()
+    
+    ST = data['ShopNameTitle'].values
+         
+    for i in tqdm(xrange(len(data))):
+        BRAND.append(0)
+        if pinpai_from_attribute[i] != 0: 
+            for j in xrange(len(reg)):          
+                if reg[j].search(pinpai_from_attribute[i]):
+                    BRAND[-1] = tag_name[j]
+                    break
+        if BRAND[-1] == 0:
+            for j in xrange(len(reg)):
+                if reg[j].search(ST[i]):
+                    BRAND[-1] = tag_name[j]
+                    break
+    #BRAND = pd.DataFrame(BRAND, columns=['Brand'])
+    
+    return BRAND
+    #return pd.concat([data, BRAND], axis=1, join_axes=[data.index])
 
 
 
@@ -124,7 +148,9 @@ def tagging_core(col_tag_binary):
     :param col_tag_binary:  为了配合pool.map函数，只能传入一个参数
     :return:
     """
-
+    import warnings
+    warnings.filterwarnings("ignore")
+    
     col = col_tag_binary[0]                  # pandas series object
     tags = col_tag_binary[1]                 # tag list
     binary = col_tag_binary[2]               # if return binary value
