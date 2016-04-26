@@ -26,13 +26,13 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
 def process_tag(industry, table_name):
 
     # 词库文件列表，unix style pathname pattern
-    TAGLIST =  BASE_DIR + u'/feature/*.txt'# 标签词库
-    BRANDSLIST = BASE_DIR + u'/brand/*.txt'# 品牌词库
+    TAGLIST =  BASE_DIR + u'/feature/'+industry+'/*.txt'# 标签词库
+    BRANDSLIST = BASE_DIR + u'/brand/'+industry+'/*.txt'# 品牌词库
 
     # EXCLUSIVES 互斥属性类型：以商品详情为准的标签类型
 
 
-    print '{} Connecting DB ...'.format(datetime.now())
+    print '{} Connecting DB{} ...'.format(datetime.now(), host)
     connect = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
 
     # 选取数据,ItemID用于写回数据库对应的行,分行业打,因为要用不同的词库
@@ -88,7 +88,7 @@ def process_tag(industry, table_name):
 def process_annual(industry):
 
     #连接
-    print '{} 正在连接数据库 ...'.format(datetime.now())
+    print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
     connect_industry = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
     connect_portal = MySQLdb.Connect(host=host, user=user, passwd=pwd, db='mp_portal', charset='utf8')
 
@@ -96,7 +96,7 @@ def process_annual(industry):
     cursor_portal = connect_portal.cursor()
 
     #词库文件,这个词库必须和打标签的词库是一个
-    TAGLIST =  BASE_DIR + u'/feature/*.txt'# 标签词库
+    TAGLIST =  BASE_DIR + u'/feature/'+industry+'/*.txt'# 标签词库
 
     #Category
     cursor_portal.execute('SELECT CategoryID,CategoryName,ParentID FROM category;')
