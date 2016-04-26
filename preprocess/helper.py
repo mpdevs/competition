@@ -8,7 +8,7 @@ def parser_label(a_list, dict_head):
     n = len(a_list)
     label = np.zeros((n, len(dict_head)))
     for i in xrange(n):
-        for x in a_list[i].split(','):
+        for x in a_list[i].strip("'").split(','):
             if x!='':
                 label[i][dict_head[x]] = 1
     return label
