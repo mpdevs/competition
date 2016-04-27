@@ -133,8 +133,9 @@ def process_annual(industry):
     cursor_portal.execute('SELECT ShopID FROM shop;')
     shops = cursor_portal.fetchall()
 
-    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM mp_women_clothing.item WHERE  TaggedItemAttr IS NOT NULL;", connect_industry)
+    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM item WHERE TaggedItemAttr IS NOT NULL;", connect_industry)
 
+    print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
     for value in shops:
 
@@ -188,9 +189,9 @@ def process_annual(industry):
 
             # #找到所有价格段内的同品类商品
             todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.shopid != value[0]) ]
-
+            
             if len(todo_data)==0:continue
-
+            
             #计算相似度
             todo_id = todo_data['itemid'].values
             todo_label = parser_label(list(todo_data['label']), dict_head)
@@ -204,7 +205,7 @@ def process_annual(industry):
                     insert_item = (item_id, todo_id[j], judge, 1, str(value[0]))
 
                     insert_items.append(insert_item)
-
+        
         if len(insert_items) > 0:
             cursor_industry.executemany(insert_sql, insert_items)
             connect_industry.commit()
