@@ -7,6 +7,9 @@ from preprocess.process import process_annual
 
 
 class Command(BaseCommand):
+    def add_arguments(self, parser):
+        parser.add_argument('industry_db_name')
+
     def handle(self, *args, **options):
-        args1 = 'mp_women_clothing' if len(args) == 0 else args[0]
-        process_annual(args1)
+        industry_db_name = options['industry_db_name']
+        process_annual(industry_db_name)
