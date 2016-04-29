@@ -42,7 +42,7 @@ def process_tag(industry, table_name):
             FROM %s WHERE NeedReTag='y';
             """%(table_name)
     
-    update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr="%s", NeedReTag='n', TaggedBrandName="%s" WHERE ItemID=%s ;"""
+    update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s WHERE ItemID=%s ;"""
     
     print '{} Loading data ...'.format(datetime.now())
     data = pd.read_sql_query(query, connect) 
