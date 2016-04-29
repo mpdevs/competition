@@ -77,7 +77,7 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
     BRAND = []
     pinpai_from_attribute= []
     for i, x in enumerate(data['Attribute']):
-        temp = x.find(u'品牌:')
+        temp = max(x.find(u'品牌:'), x.find(u'品牌：'))
         if temp != -1:
             pinpai_from_attribute.append(x[temp+3:x.find(u'，',temp+3)])
         else:
@@ -90,8 +90,8 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
         tag_name.append(t.replace('\\','/').split('/')[-1][:-4])
         try:
             f = open(t, 'r')
-            reg.append(re.compile('|'.join(list(set([w.strip('\t\n\r') for w in f if w != ''])))))
-            #reg.append([w.strip('\t\n\r') for w in f if w != ''])
+            temp = '|'.join(set([w.strip('\t\n\r') for w in f if w != ''])).decode('utf8')
+            reg.append(re.compile(temp))
         except UnicodeDecodeError, e:
             error_tag_files.append(t)
     if len(error_tag_files) > 0:
@@ -114,11 +114,8 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
                 if reg[j].search(ST[i]):
                     BRAND[-1] = tag_name[j]
                     break
-    #BRAND = pd.DataFrame(BRAND, columns=['Brand'])
     
     return BRAND
-    #return pd.concat([data, BRAND], axis=1, join_axes=[data.index])
-
 
 
 def tagging(col, tags, split=10000, binary=True, processes=None):
