@@ -85,7 +85,7 @@ def process_tag(industry, table_name):
 
 
 
-def process_annual(industry):
+def process_annual(industry, table_from, table_to):
 
     #连接
     print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
@@ -125,7 +125,7 @@ def process_annual(industry):
         dict_head[head[i]] = i
 
     insert_sql = """
-        INSERT INTO itemrelation(SourceItemID,TargetItemID,RelationType,Status,ShopId)
+        INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
         VALUES
         ('%s',%s,'%s','%s', %s)
         """
@@ -133,20 +133,20 @@ def process_annual(industry):
     cursor_portal.execute('SELECT ShopID FROM shop;')
     shops = cursor_portal.fetchall()
 
-    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM item WHERE TaggedItemAttr IS NOT NULL;", connect_industry)
+    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL;", connect_industry)
 
     print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
     for value in shops:
 
-        cursor_industry.execute("delete from itemrelation where shopid = %d"%value)
+        cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)
         connect_industry.commit()
 
         print u'删除店铺%d数据'%value
 
         print datetime.now(),u'正在计算ShopID=%d ...'%value
 
-        cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM item WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
+        cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM "+table_from+" WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
         items = cursor_industry.fetchall()
 
         if len(items)==0: continue
