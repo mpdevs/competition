@@ -144,7 +144,7 @@ def process_annual(industry, table_from, table_to):
 
         print u'删除店铺%d数据'%value
 
-        print datetime.now(),u'正在计算ShopID=%d ...'%value
+        print datetime.now(),u'正在读取ShopID=%d ...'%value
 
         cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM "+table_from+" WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
         items = cursor_industry.fetchall()
@@ -154,6 +154,7 @@ def process_annual(industry, table_from, table_to):
         label = parser_label([_[0] for _ in items], dict_head)
 
         insert_items = []
+        print datetime.now(),u'正在计算ShopID=%d ...'%value
         #对每个商品找竞品
         for i, item in enumerate(tqdm(items)):
             item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
