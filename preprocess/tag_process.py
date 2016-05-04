@@ -94,6 +94,7 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
             reg.append(re.compile(temp))
         except UnicodeDecodeError, e:
             error_tag_files.append(t)
+            
     if len(error_tag_files) > 0:
         print u"""
             无法读取以下词库文件，请转码UTF-8后再次尝试。\n\n***\n\n{}

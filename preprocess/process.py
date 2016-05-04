@@ -85,7 +85,7 @@ def process_tag(industry, table_name):
 
 
 
-def process_annual(industry, table_from, table_to):
+def process_annual(industry, table_from, table_to, one_shop=None):
 
     #连接
     print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
@@ -129,11 +129,13 @@ def process_annual(industry, table_from, table_to):
         VALUES
         ('%s',%s,'%s','%s', %s)
         """
+    if one_shop is None or one_shop=='':
+        cursor_portal.execute('SELECT ShopID FROM shop;')
+        shops = cursor_portal.fetchall()
+    else:
+        shops = [int(one_shop)]
 
-    cursor_portal.execute('SELECT ShopID FROM shop;')
-    shops = cursor_portal.fetchall()
-
-    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL;", connect_industry)
+    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=30 and MonthlySalesQty=0) or MonthlySalesQty>=30);", connect_industry)
 
     print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
