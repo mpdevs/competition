@@ -13,7 +13,7 @@ from tag_process import tagging_ali_items, tagging_ali_brands
 
 from weighted_jacca import getcut, WJacca
 from helper import parser_label
-from enums import EXCLUSIVES, IMPORTANT_ATTR_ENUM
+from enums import DICT_EXCLUSIVES, IMPORTANT_ATTR_ENUM
 
 from mp_preprocess.settings import host, user, pwd
 
@@ -30,7 +30,7 @@ def process_tag(industry, table_name):
     BRANDSLIST = BASE_DIR + u'/brand/'+industry+'/*.txt'# 品牌词库
 
     # EXCLUSIVES 互斥属性类型：以商品详情为准的标签类型
-
+    EXCLUSIVES = DICT_EXCLUSIVES[industry]
 
     print '{} Connecting DB{} ...'.format(datetime.now(), host)
     connect = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
@@ -116,7 +116,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
 
 
     #定义总共的二级维度列表
-    fl = [u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门禁", u"穿着方式", u"组合形式", u"面料", u"颜色", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"裙型", u"裙长", u"fea", u"fun"]
+    fl = [u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"颜色", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"裙型", u"裙长", u"fea", u"fun"]
 
     #读取
     head = [x[len(TAGLIST)-5:-4] for x in glob(TAGLIST)]

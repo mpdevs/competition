@@ -3,7 +3,11 @@ __author__ = 'Dragon'
 
 
 
-EXCLUSIVES = [u'领型', u'面料', u'袖款', u'袖长', u'腰型', u'厚薄', u"扣型"]
+DICT_EXCLUSIVES = {
+    'mp_women_clothing':[u'领型', u'面料', u'袖款', u'袖长', u'腰型', u'厚薄', u"扣型"],
+    'mp_men_clothing':[u'领型', u'面料', u'袖款', u'袖长', u'腰型', u'厚薄', u"扣型"],
+    'mp_home_textile':[]
+    }
 
 
 IMPORTANT_ATTR_ENUM = {
