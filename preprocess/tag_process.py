@@ -59,24 +59,17 @@ def tagging_ali_items(file_or_frame, tag_list, exclusives, nrows=None, sep=',', 
     #return pd.concat([data, df_nx_tags, df_x_tags], axis=1, join_axes=[data.index])
 
 
-def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processes=None):
-    """
-    Tags a table by Title and Attribute column with given tag list.
-    :param file_or_frame:   csv file path or pandas DataFrame object.
-    :param brands_list:     unix style pathname pattern.
-    :param nrows:           number of rows to read from file or DataFrame.
-    :param sep:             Dilimiter to use.
-    :param processes:       processes to use for multiprocessing. By default equivalent to number of processers.
-    :return: pd.concat
-    """
+def tagging_ali_brands(data, brands_list, nrows=None, sep=',', processes=None):
     
-    data = file_or_frame if isinstance(file_or_frame, pd.DataFrame) else pd.read_csv(file_or_frame, nrows=nrows, sep=sep)
     tags = glob(brands_list)
     tags.sort(reverse = True)
            
     BRAND = []
     pinpai_from_attribute= []
     for i, x in enumerate(data['Attribute']):
+        if x is None:
+            pinpai_from_attribute.append(0)
+            continue
         temp = max(x.find(u'品牌:'), x.find(u'品牌：'))
         if temp != -1:
             pinpai_from_attribute.append(x[temp+3:x.find(u'，',temp+3)])
@@ -110,7 +103,7 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
                 if reg[j].search(pinpai_from_attribute[i].replace(' ', '')):
                     BRAND[-1] = tag_name[j]
                     break
-        if BRAND[-1] == 0:
+        if BRAND[-1] == 0 and ST[i] is not None:
             for j in xrange(len(reg)):
                 if reg[j].search(ST[i].replace(' ', '')):
                     BRAND[-1] = tag_name[j]

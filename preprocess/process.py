@@ -101,7 +101,7 @@ def process_tag(industry, table_name):
 def process_annual(industry, table_from, table_to, one_shop=None):
     
     ifmonthly = True
-    if table_name.find('monthly') == -1:
+    if table_from.find('monthly') == -1:
         ifmonthly = False
     
     #连接
