@@ -118,8 +118,12 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     categories = cursor_portal.fetchall()
 
     category_id_dict = {str(_[0]):{'category_id':str(_[0]), 'category_name':_[1], 'parent_id':_[2] } for _ in categories}
-
-
+    
+    #Shop2Brandname
+    cursor_portal.execute('SELECT ShopID,BrandName FROM shop;')
+    shop2brand = cursor_portal.fetchall()
+    shop2brand_dict = {_[0]:_[1] for _ in shop2brand}
+    
     #定义重要维度
     important_attr = IMPORTANT_ATTR_ENUM[industry]
     dict_imp_name = important_attr['name']
@@ -137,32 +141,50 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     dict_head = {}
     for i in xrange(len(head)):
         dict_head[head[i]] = i
-
-    insert_sql = """
-        INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
-        VALUES
-        ('%s',%s,'%s','%s', %s)
+    
+    if ifmonthly is False:
+        insert_sql = """
+            INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
+            VALUES
+            ('%s',%s,'%s','%s', %s)    
         """
+    else:
+        insert_sql = """
+            INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,BrandName)
+            VALUES
+            ('%s',%s,'%s','%s', %s)    
+        """
+               
     if one_shop is None or one_shop=='':
         cursor_portal.execute('SELECT ShopID FROM shop;')
-        shops = cursor_portal.fetchall()
+        shops = [int(_[0]) for _ in cursor_portal.fetchall()]
     else:
         shops = [int(one_shop)]
-
-    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=30 and MonthlySalesQty=0) or MonthlySalesQty>=30);", connect_industry)
-
+        
+    if ifmonthly is False:#这个时候按照shopid找
+        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=30 and MonthlySalesQty=0) or MonthlySalesQty>=30);", connect_industry)
+    else:#这个时候按照brandname找
+        for i in xrange(len(shops)):
+            shops[i] = shop2brand_dict[shops[i]]
+        
+        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, TaggedBrandName as Brand,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and SalesQty>=30;", connect_industry)
+               
     print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
     for value in shops:
-
-        cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)
+        if ifmonthly is False:
+            cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)
+        else:
+            cursor_industry.execute("""delete from """+table_to+""" where BrandName = "%s" """%value)
         connect_industry.commit()
 
-        print u'删除店铺%d数据'%value
+        print u'删除店铺%s数据'%value
 
-        print datetime.now(),u'正在读取ShopID=%d ...'%value
-
-        cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM "+table_from+" WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
+        print datetime.now(),u'正在读取店铺%s ...'%value
+        if ifmonthly is False:
+            cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM "+table_from+" WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
+        else:
+            cursor_industry.execute("""SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM """+table_from+""" WHERE TaggedBrandName="%s" AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"""%value)
         items = cursor_industry.fetchall()
 
         if len(items)==0: continue
@@ -170,7 +192,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
         label = parser_label([_[0] for _ in items], dict_head)
 
         insert_items = []
-        print datetime.now(),u'正在计算ShopID=%d ...'%value
+        print datetime.now(),u'正在计算店铺%s ...'%value
         #对每个商品找竞品
         for i, item in enumerate(tqdm(items)):
             item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
@@ -205,7 +227,10 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             maxprice = price * (1+setprecetage)
 
             # #找到所有价格段内的同品类商品
-            todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.shopid != value[0]) ]
+            if ifmonthly is False:
+                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.shopid != value) ]
+            else:
+                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.Brand != value) ]
             
             if len(todo_data)==0:continue
             
@@ -215,11 +240,15 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             for j in xrange(len(todo_id)):
                 samilarity = WJacca(label[i], todo_label[j], cut, pvalue)
 
-                if samilarity < jaccavalue[0]: continue
-                judge = 2 if samilarity > jaccavalue[1] else 1
-
+                if samilarity < jaccavalue[0]: 
+                    judge = 0
+                elif samilarity > jaccavalue[1]:
+                    judge = 2
+                else:
+                    judge = 1
+                
                 if ifmonthly or judge > 0:
-                    insert_item = (item_id, todo_id[j], judge, 1, str(value[0]))
+                    insert_item = (item_id, todo_id[j], judge, 1, value)
 
                     insert_items.append(insert_item)
         
