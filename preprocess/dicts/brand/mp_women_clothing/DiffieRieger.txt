@@ -1,2 +1,2 @@
-Diffie Rieger
+DiffieRieger
 迪菲丽格

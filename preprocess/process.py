@@ -76,8 +76,6 @@ def process_tag(industry, table_name):
             print '{} Tagging feature ...'.format(datetime.now())
             label= tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)# 0-1 label          
             
-            
-            print u'{} Zipping data ...'.format(datetime.now())
             feature = label.columns
             label = label.values
             ID = map(int, batch_data['ItemID'].values)  

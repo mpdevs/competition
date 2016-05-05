@@ -1,2 +1,2 @@
-YIELD LET
+YIELDLET
 依随

@@ -9,20 +9,8 @@ from multiprocessing import Pool
 from datetime import datetime
 from tqdm import tqdm
 
-def tagging_ali_items(file_or_frame, tag_list, exclusives, nrows=None, sep=',', processes=None):
-    """
-    Tags a table by Title and Attribute column with given tag list.
-    :param file_or_frame: csv file path or pandas DataFrame object.
-    :param tag_list:      unix style pathname pattern.
-    :param exclusives:
-    :param nrows:         number of rows to read from file or DataFrame.
-    :param sep:           Dilimiter to use.
-    :param processes:     processes to use for multiprocessing. By default equivalent to number of processers.
-    :return: pd.concat
-    """
+def tagging_ali_items(data, tag_list, exclusives, nrows=None, sep=',', processes=None):
 
-
-    data = file_or_frame if isinstance(file_or_frame, pd.DataFrame) else pd.read_csv(file_or_frame, nrows=nrows, sep=sep)
     tags = glob(tag_list)                                                # load tag files
 
     # seperate exclusive and non-exclusive tags
@@ -65,16 +53,13 @@ def tagging_ali_brands(data, brands_list, nrows=None, sep=',', processes=None):
     tags.sort(reverse = True)
            
     BRAND = []
-    pinpai_from_attribute= []
+    N = len(data)
+    pinpai_from_attribute = [0]*N
     for i, x in enumerate(data['Attribute']):
-        if x is None:
-            pinpai_from_attribute.append(0)
-            continue
-        temp = max(x.find(u'品牌:'), x.find(u'品牌：'))
-        if temp != -1:
-            pinpai_from_attribute.append(x[temp+3:x.find(u'，',temp+3)])
-        else:
-            pinpai_from_attribute.append(0)
+        if x is None: continue
+        n = max(x.find(u'品牌:'), x.find(u'品牌：')) + 3
+        if n != 2:
+            pinpai_from_attribute[i] = x[n:x.find(u'，',n)]
     
     tag_name = []
     reg = []
@@ -83,8 +68,14 @@ def tagging_ali_brands(data, brands_list, nrows=None, sep=',', processes=None):
         tag_name.append(t.replace('\\','/').split('/')[-1][:-4])
         try:
             f = open(t, 'r')
-            temp = '|'.join(set([w.strip('\t\n\r') for w in f if w != ''])).decode('utf8')
-            reg.append(re.compile(temp, re.IGNORECASE))
+            tl = list(set([w.strip('\t\n\r') for w in f if w != '']))
+            l = []
+            for w in tl:
+                for p in ['\\', '+', '*', '?', '^', '$', '|', '.', '[']:
+                    w = w.replace(p, '\\'+p)
+                l.append(w)
+
+            reg.append(re.compile('|'.join(l).decode('utf8'), re.IGNORECASE))
         except UnicodeDecodeError, e:
             error_tag_files.append(t)
             
@@ -98,14 +89,17 @@ def tagging_ali_brands(data, brands_list, nrows=None, sep=',', processes=None):
          
     for i in tqdm(xrange(len(data))):
         BRAND.append(0)
-        if pinpai_from_attribute[i] != 0: 
+        t = pinpai_from_attribute[i]
+        if t != 0: 
+            t = t.replace(' ', '')
             for j in xrange(len(reg)):          
-                if reg[j].search(pinpai_from_attribute[i].replace(' ', '')):
+                if reg[j].search(t):
                     BRAND[-1] = tag_name[j]
                     break
         if BRAND[-1] == 0 and ST[i] is not None:
+            t = ST[i].replace(' ', '')
             for j in xrange(len(reg)):
-                if reg[j].search(ST[i].replace(' ', '')):
+                if reg[j].search(t):
                     BRAND[-1] = tag_name[j]
                     break
     
