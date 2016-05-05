@@ -24,7 +24,11 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
 
 
 def process_tag(industry, table_name):
-
+    
+    ifmonthly = True
+    if table_name.find('monthly') == -1:
+        ifmonthly = False
+     
     # 词库文件列表，unix style pathname pattern
     TAGLIST =  BASE_DIR + u'/feature/'+industry+'/*.txt'# 标签词库
     BRANDSLIST = BASE_DIR + u'/brand/'+industry+'/*.txt'# 品牌词库
@@ -36,14 +40,23 @@ def process_tag(industry, table_name):
     connect = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
 
     # 选取数据,ItemID用于写回数据库对应的行,分行业打,因为要用不同的词库
-    query = """
-            SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
-            ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle
-            FROM %s WHERE NeedReTag='y';
-            """%(table_name)
-    
-    update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s WHERE ItemID=%s ;"""
-    
+    if ifmonthly:
+        query = """
+                SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
+                ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle
+                FROM %s;
+                """%(table_name)
+        
+        update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ItemID=%s ;"""
+    else:
+        query = """
+                SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
+                ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle
+                FROM %s WHERE NeedReTag='y';
+                """%(table_name)
+        
+        update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s WHERE ItemID=%s ;"""
+        
     print '{} Loading data ...'.format(datetime.now())
     data = pd.read_sql_query(query, connect) 
     
@@ -86,7 +99,11 @@ def process_tag(industry, table_name):
 
 
 def process_annual(industry, table_from, table_to, one_shop=None):
-
+    
+    ifmonthly = True
+    if table_name.find('monthly') == -1:
+        ifmonthly = False
+    
     #连接
     print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
     connect_industry = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
@@ -103,7 +120,6 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     categories = cursor_portal.fetchall()
 
     category_id_dict = {str(_[0]):{'category_id':str(_[0]), 'category_name':_[1], 'parent_id':_[2] } for _ in categories}
-
 
 
     #定义重要维度
@@ -204,7 +220,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
                 if samilarity < jaccavalue[0]: continue
                 judge = 2 if samilarity > jaccavalue[1] else 1
 
-                if judge > 0:
+                if ifmonthly or judge > 0:
                     insert_item = (item_id, todo_id[j], judge, 1, str(value[0]))
 
                     insert_items.append(insert_item)

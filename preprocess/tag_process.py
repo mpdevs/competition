@@ -91,7 +91,7 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
         try:
             f = open(t, 'r')
             temp = '|'.join(set([w.strip('\t\n\r') for w in f if w != ''])).decode('utf8')
-            reg.append(re.compile(temp))
+            reg.append(re.compile(temp, re.IGNORECASE))
         except UnicodeDecodeError, e:
             error_tag_files.append(t)
             
@@ -107,12 +107,12 @@ def tagging_ali_brands(file_or_frame, brands_list, nrows=None, sep=',', processe
         BRAND.append(0)
         if pinpai_from_attribute[i] != 0: 
             for j in xrange(len(reg)):          
-                if reg[j].search(pinpai_from_attribute[i]):
+                if reg[j].search(pinpai_from_attribute[i].replace(' ', '')):
                     BRAND[-1] = tag_name[j]
                     break
         if BRAND[-1] == 0:
             for j in xrange(len(reg)):
-                if reg[j].search(ST[i]):
+                if reg[j].search(ST[i].replace(' ', '')):
                     BRAND[-1] = tag_name[j]
                     break
     
