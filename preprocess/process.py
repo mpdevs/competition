@@ -9,7 +9,8 @@ import pandas as pd
 import numpy as np
 from math import ceil
 
-from tag_process import tagging_ali_items, tagging_ali_brands
+from tag_process import tagging_ali_items
+from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
 
 from weighted_jacca import getcut, WJacca
 from helper import parser_label
@@ -62,16 +63,17 @@ def process_tag(industry, table_name):
     
     n = len(data)
     if n > 0:       
-        batch = 10000        
+        batch = 10000    
+        brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)    
         print u'Total number of data: {}, batch_size = {}'.format(n, batch)
-        
+                
         cursor = connect.cursor()
         for j in xrange(int(ceil(float(len(data))/batch))):
             print '{} Start batch {}'.format(datetime.now(), j+1)
             batch_data = data.iloc[j*batch:min((j+1)*batch, n)]
             
             print '{} Tagging brands ...'.format(datetime.now())            
-            brand = tagging_ali_brands(batch_data, BRANDSLIST)
+            brand = tagging_ali_brands(batch_data, brand_preparation)
             
             print '{} Tagging feature ...'.format(datetime.now())
             label= tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)# 0-1 label          
