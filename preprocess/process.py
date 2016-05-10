@@ -105,7 +105,6 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
     connect_industry = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
     connect_portal = MySQLdb.Connect(host=host, user=user, passwd=pwd, db='mp_portal', charset='utf8')
-
     cursor_industry = connect_industry.cursor()
     cursor_portal = connect_portal.cursor()
 
@@ -115,13 +114,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     #Category
     cursor_portal.execute('SELECT CategoryID,CategoryName,ParentID FROM category;')
     categories = cursor_portal.fetchall()
-
     category_id_dict = {str(_[0]):{'category_id':str(_[0]), 'category_name':_[1], 'parent_id':_[2] } for _ in categories}
-    
-    #Shop2Brandname
-    cursor_portal.execute("SELECT ShopID,BrandName FROM shop where IsClient='y';")
-    shop2brand = cursor_portal.fetchall()
-    shop2brand_dict = {_[0]:_[1] for _ in shop2brand}
     
     #定义重要维度
     important_attr = IMPORTANT_ATTR_ENUM[industry]
@@ -154,16 +147,22 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             ('%s',%s,'%s','%s', %s)    
         """       
         all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, TaggedBrandName as Brand,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and SalesQty>=30;", connect_industry)
+        cursor_portal.execute("SELECT ShopID,BrandName FROM shop where IsClient='y';")
+        shop2brand = cursor_portal.fetchall()
+        shop2brand_dict = {_[0]:_[1] for _ in shop2brand}
         for i in xrange(len(shops)):
             shops[i] = shop2brand_dict[shops[i]]
+    
                
     if one_shop is None or one_shop=='':
         cursor_portal.execute("SELECT ShopID FROM shop where IsClient='y';")
         shops = [int(_[0]) for _ in cursor_portal.fetchall()]
     else:
         shops = [int(one_shop)]
+    
            
-    #Find important dimension
+    #为每个cid计算该品类下计算相似度的切分
+    #先计算重要维度
     def find_important(category_id):
         important = None
         if category_id_dict.has_key(category_id):
@@ -176,9 +175,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
                 parent_id = category_id_dict[category_id]['parent_id']
                 if parent_id is not None:
                     important = find_important(str(parent_id))
-        return important
-    
-    #为每个cid计算该品类下计算相似度的切分    
+        return important       
     CID2CUT = {}
     all_cid = set(all_data['CategoryID'].values)
     for cid in all_cid:
@@ -209,14 +206,13 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             cursor_industry.execute("""SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM """+table_from+""" WHERE TaggedBrandName="%s" AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"""%value)
         items = cursor_industry.fetchall()
 
-        if len(items)==0: continue
+        if len(items) == 0: continue
 
         label = parser_label([_[0] for _ in items], dict_head)
 
         insert_items = []
         print datetime.now(),u'正在计算店铺%s ...'%value
         
-        ttt = datetime.now()-datetime.now()
         #对每个商品找竞品
         for i, item in enumerate(tqdm(items)):
             item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
@@ -250,21 +246,20 @@ def process_annual(industry, table_from, table_to, one_shop=None):
                 v2 = todo_label[j]
                 naflag = False
                 for _ in mustequal:
-                    if sum(v1[_])+sum(v2[_])!=0 and (v1[_]-v2[_]).any()!=0:
+                    if sum(v1[_])+sum(v2[_]) != 0 and (v1[_]-v2[_]).any() != 0:
                         naflag = True
                         break
                 
                 if naflag:
-                    samilarity = 0
-                else:
-                    samilarity = WJacca(v1, v2, cut, pvalue)
-                
-                if samilarity < jaccavalue[0]: 
                     judge = 0
-                elif samilarity > jaccavalue[1]:
-                    judge = 2
                 else:
-                    judge = 1
+                    samilarity = WJacca(v1, v2, cut, pvalue)                
+                    if samilarity < jaccavalue[0]: 
+                        judge = 0
+                    elif samilarity > jaccavalue[1]:
+                        judge = 2
+                    else:
+                        judge = 1
 
                 if ifmonthly or judge > 0:
                     insert_item = (item_id, todo_id[j], judge, 1, value)
