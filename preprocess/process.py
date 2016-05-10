@@ -6,7 +6,6 @@ from tqdm import tqdm
 from glob import glob
 from datetime import datetime
 import pandas as pd
-import numpy as np
 from math import ceil
 
 from tag_process import tagging_ali_items
@@ -14,7 +13,7 @@ from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
 
 from weighted_jacca import getcut, WJacca
 from helper import parser_label
-from enums import DICT_EXCLUSIVES, IMPORTANT_ATTR_ENUM
+from enums import DICT_EXCLUSIVES, IMPORTANT_ATTR_ENUM, DICT_FL, DICT_MUST
 
 from mp_preprocess.settings import host, user, pwd
 
@@ -122,7 +121,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     category_id_dict = {str(_[0]):{'category_id':str(_[0]), 'category_name':_[1], 'parent_id':_[2] } for _ in categories}
     
     #Shop2Brandname
-    cursor_portal.execute('SELECT ShopID,BrandName FROM shop;')
+    cursor_portal.execute("SELECT ShopID,BrandName FROM shop where IsClient='y';")
     shop2brand = cursor_portal.fetchall()
     shop2brand_dict = {_[0]:_[1] for _ in shop2brand}
     
@@ -134,9 +133,8 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     #设定价格段上下浮动百分比;不同等级的属性权重划分;异位同位同类划分阈值
     setprecetage, pvalue, jaccavalue = 0.2,  [0.6,0.4], [0.56,0.66]
 
-
     #定义总共的二级维度列表
-    fl = [u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"颜色", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"裙型", u"裙长", u"fea", u"fun"]
+    fl = DICT_FL[industry]
 
     #读取
     head = [x[len(TAGLIST)-5:-4] for x in glob(TAGLIST)]
@@ -158,29 +156,55 @@ def process_annual(industry, table_from, table_to, one_shop=None):
         """
                
     if one_shop is None or one_shop=='':
-        cursor_portal.execute('SELECT ShopID FROM shop;')
+        cursor_portal.execute("SELECT ShopID FROM shop where IsClient='y';")
         shops = [int(_[0]) for _ in cursor_portal.fetchall()]
     else:
         shops = [int(one_shop)]
         
     if ifmonthly is False:#这个时候按照shopid找
         all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=30 and MonthlySalesQty=0) or MonthlySalesQty>=30);", connect_industry)
-    else:#这个时候按照brandname找
+    else:#这个时候没有shopid的字段,按照brandname找
         for i in xrange(len(shops)):
-            shops[i] = shop2brand_dict[shops[i]]
-        
+            shops[i] = shop2brand_dict[shops[i]]        
         all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, TaggedBrandName as Brand,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and SalesQty>=30;", connect_industry)
+    
+    #Find important dimension
+    def find_important(category_id):
+        important = None
+        if category_id_dict.has_key(category_id):
+            category_name = category_id_dict[category_id]['category_name']
+            for j, x in enumerate(dict_imp_name):
+                if category_name in x:
+                    important = dict_imp_value[j]
+                    return important
+            if not important:
+                parent_id = category_id_dict[category_id]['parent_id']
+                if parent_id is not None:
+                    important = find_important(str(parent_id))
+        return important
+    
+    #为每个cid计算该品类下计算相似度的切分    
+    CID2CUT = {}
+    all_cid = set(all_data['CategoryID'].values)
+    for cid in all_cid:
+        cid = str(cid)
+        important = find_important(cid)
+        if important is None: 
+            print u"重要维度缺失:"+cid
+            continue
+        assert len(set(important).difference(fl)) == 0           
+        unimportant = list(set(fl) ^ set(important))
+        CID2CUT[cid] = getcut([important, unimportant], head)
                
     print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
     for value in shops:
+        print u'正在删除店铺%s数据'%value
         if ifmonthly is False:
             cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)
         else:
             cursor_industry.execute("""delete from """+table_to+""" where BrandName = "%s" """%value)
         connect_industry.commit()
-
-        print u'删除店铺%s数据'%value
 
         print datetime.now(),u'正在读取店铺%s ...'%value
         if ifmonthly is False:
@@ -195,36 +219,23 @@ def process_annual(industry, table_from, table_to, one_shop=None):
 
         insert_items = []
         print datetime.now(),u'正在计算店铺%s ...'%value
+        
+        ttt = datetime.now()-datetime.now()
         #对每个商品找竞品
         for i, item in enumerate(tqdm(items)):
             item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
-
             if price == 0: continue
 
-            #Find important dimension
-            def find_important(category_id):
-                important = None
-                if category_id_dict.has_key(category_id):
-                    category_name = category_id_dict[category_id]['category_name']
-                    for j, x in enumerate(dict_imp_name):
-                        if category_name in x:
-                            important = dict_imp_value[j]
-                            return important
-                    if not important:
-                        parent_id = category_id_dict[category_id]['parent_id']
-                        if parent_id is not None:
-                            important = find_important(str(parent_id))
-                return important
-
-            important = find_important(category_id)
-            if important is None: continue
-
-
-            #得到不重要的维度
-            unimportant = list(set(fl) ^ set(important))
-            cut = getcut(important, unimportant, head)
-
-
+            #得到必要的维度
+            must = []
+            for j, _ in enumerate(DICT_MUST[industry]['name']):
+                if category_id_dict[category_id]['category_name'] in _:
+                    must = DICT_MUST[industry]['value'][j]
+                    break
+            assert len(set(must).difference(important)) == 0
+            mustequal = getcut([must], head)
+            
+            cut = CID2CUT[category_id]
             minprice = price * (1-setprecetage)
             maxprice = price * (1+setprecetage)
 
@@ -233,32 +244,40 @@ def process_annual(industry, table_from, table_to, one_shop=None):
                 todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.shopid != value) ]
             else:
                 todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.Brand != value) ]
-            
             if len(todo_data)==0:continue
-            
+                       
             #计算相似度
             todo_id = todo_data['itemid'].values
             todo_label = parser_label(list(todo_data['label']), dict_head)
+            v1 = label[i]
             for j in xrange(len(todo_id)):
-                samilarity = WJacca(label[i], todo_label[j], cut, pvalue)
-
+                v2 = todo_label[j]
+                naflag = False
+                for _ in mustequal:
+                    if sum(v1[_])+sum(v2[_])!=0 and (v1[_]-v2[_]).any()!=0:
+                        naflag = True
+                        break
+                
+                if naflag:
+                    samilarity = 0
+                else:
+                    samilarity = WJacca(v1, v2, cut, pvalue)
+                
                 if samilarity < jaccavalue[0]: 
                     judge = 0
                 elif samilarity > jaccavalue[1]:
                     judge = 2
                 else:
                     judge = 1
-                
+
                 if ifmonthly or judge > 0:
                     insert_item = (item_id, todo_id[j], judge, 1, value)
-
                     insert_items.append(insert_item)
-        
+
         if len(insert_items) > 0:
+            print '正在插入%d条数据'%len(insert_items)
             cursor_industry.executemany(insert_sql, insert_items)
             connect_industry.commit()
-            print 'insert'+str(len(insert_items))
-
-
+            
     connect_industry.close()
     print datetime.now()

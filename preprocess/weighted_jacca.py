@@ -1,28 +1,19 @@
 # -*- coding: utf-8 -*-
 
+def getcut(miu, head):
+    result = []
+    for i in miu:
+        t = []
+        for x in i:
+            t.append([])
+            for j in xrange(len(head)):
+                if head[j].find(x)+1:
+                    t[-1].append(j)
+            if len(t[-1]) == 0:
+                del t[-1]
+        result.append(t)
 
-def getcut(important, unimportant, head):
-    cut1 = []
-    # print 'Can not find:'
-    for x in important:
-        cut1.append([])
-        for i in xrange(len(head)):
-            if head[i].find(x)+1:
-                cut1[-1].append(i)
-        if len(cut1[-1]) == 0:
-            del cut1[-1]
-            # print x
-    cut2 = []
-    for x in unimportant:
-        cut2.append([])
-        for i in xrange(len(head)):
-            if head[i].find(x)+1:
-                cut2[-1].append(i)
-        if len(cut2[-1]) == 0:
-            del cut2[-1]
-            # print x
-
-    return [cut1] + [cut2]
+    return result
 
 
 def Jaca(x,y):
@@ -35,41 +26,31 @@ def Jaca(x,y):
 
 
 def WJacca(x, y, cut, weights):
-    assert len(x) == len(y)
-    assert len(weights)==len(cut)
+    result = 0.0
+    n0 = len(cut[0])
+    n1 = len(cut[1])
+    a0 = weights[0]/n0
 
-    w = []
-    temp = True
-    for i in xrange(len(cut)):
-        w.append([])
-        for j in xrange(len(cut[i])):
-            if sum(x[cut[i][j]]) == 0 or sum(y[cut[i][j]]) == 0:
-                w[i].append(0)
-            else:
-                w[i].append(1)
-                temp = False
-    if temp:
-        return 0
-    temp = 0.0
-    for i in xrange(len(w)):
-        tt = sum(w[i])
-        if tt == 0:
-            continue
-        else:
-            t = weights[i]/tt
-        for j in xrange(len(w[i])):
-            if w[i][j] != 0:
-                temp += t * Jaca(x[cut[i][j]],y[cut[i][j]])
-    return temp
+    for i in xrange(n0):
+        t = cut[0][i]
+        result += a0 * Jaca(x[t],y[t])
+    
+    w = [False] * n1
+    for i in xrange(n1):
+        t = cut[1][i] 
+        if sum(x[t]) == 0 or sum(y[t]) == 0:
+            w[i] = True
 
+    n = w.count(1)   
+    if n == 0: 
+        return result
+    else:
+        a1 = min(a0, weights[1]/n)
+    
+    for i in xrange(n1):
+        if w[i]: continue
+        t = cut[1][i]
+        result += a1 * Jaca(x[t],y[t])
+      
+    return result
 
-'''
-x=np.array([1,0,1])
-y=np.array([1,1,1])
-weights = [0.6,0.4]
-important = ['1']
-unimportant = ['2']
-head = ['1','2','23']
-cut = getcut(important, unimportant, head)
-print WJacca(x,y,cut,weights)
-'''
