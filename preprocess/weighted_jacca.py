@@ -12,14 +12,13 @@ def getcut(miu, head):
             if len(t[-1]) == 0:
                 del t[-1]
         result.append(t)
-
     return result
 
 
 def Jaca(x,y):
     a = x.dot(y)
     b = sum(x+y) - a
-    if a==0:
+    if a == 0:
         return 0
     else:
         return float(a)/b
@@ -35,13 +34,13 @@ def WJacca(x, y, cut, weights):
         t = cut[0][i]
         result += a0 * Jaca(x[t],y[t])
     
-    w = [False] * n1
+    w = [True] * n1
     for i in xrange(n1):
-        t = cut[1][i] 
-        if sum(x[t]) == 0 or sum(y[t]) == 0:
-            w[i] = True
-
-    n = w.count(1)   
+        t = cut[1][i]
+        if sum(x[t]) != 0 and sum(y[t]) != 0:
+            w[i] = False
+    
+    n = w.count(False)
     if n == 0: 
         return result
     else:
@@ -51,6 +50,6 @@ def WJacca(x, y, cut, weights):
         if w[i]: continue
         t = cut[1][i]
         result += a1 * Jaca(x[t],y[t])
-      
+     
     return result
 

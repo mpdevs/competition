@@ -95,8 +95,6 @@ def process_tag(industry, table_name):
 
 
 
-
-
 def process_annual(industry, table_from, table_to, one_shop=None):
     
     ifmonthly = True
@@ -148,26 +146,23 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             VALUES
             ('%s',%s,'%s','%s', %s)    
         """
+        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=30 and MonthlySalesQty=0) or MonthlySalesQty>=30);", connect_industry)
     else:
         insert_sql = """
             INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,BrandName)
             VALUES
             ('%s',%s,'%s','%s', %s)    
-        """
+        """       
+        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, TaggedBrandName as Brand,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and SalesQty>=30;", connect_industry)
+        for i in xrange(len(shops)):
+            shops[i] = shop2brand_dict[shops[i]]
                
     if one_shop is None or one_shop=='':
         cursor_portal.execute("SELECT ShopID FROM shop where IsClient='y';")
         shops = [int(_[0]) for _ in cursor_portal.fetchall()]
     else:
         shops = [int(one_shop)]
-        
-    if ifmonthly is False:#这个时候按照shopid找
-        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=30 and MonthlySalesQty=0) or MonthlySalesQty>=30);", connect_industry)
-    else:#这个时候没有shopid的字段,按照brandname找
-        for i in xrange(len(shops)):
-            shops[i] = shop2brand_dict[shops[i]]        
-        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, TaggedBrandName as Brand,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and SalesQty>=30;", connect_industry)
-    
+           
     #Find important dimension
     def find_important(category_id):
         important = None
@@ -199,13 +194,14 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
     for value in shops:
-        print u'正在删除店铺%s数据'%value
+        '''
+        print datetime.now(),u'正在删除店铺%s数据 ...'%value
         if ifmonthly is False:
             cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)
         else:
             cursor_industry.execute("""delete from """+table_to+""" where BrandName = "%s" """%value)
         connect_industry.commit()
-
+        '''
         print datetime.now(),u'正在读取店铺%s ...'%value
         if ifmonthly is False:
             cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM "+table_from+" WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
@@ -244,7 +240,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
                 todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.shopid != value) ]
             else:
                 todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.Brand != value) ]
-            if len(todo_data)==0:continue
+            if len(todo_data) == 0:continue
                        
             #计算相似度
             todo_id = todo_data['itemid'].values
@@ -276,8 +272,8 @@ def process_annual(industry, table_from, table_to, one_shop=None):
 
         if len(insert_items) > 0:
             print '正在插入%d条数据'%len(insert_items)
-            cursor_industry.executemany(insert_sql, insert_items)
-            connect_industry.commit()
+            #cursor_industry.executemany(insert_sql, insert_items)
+            #connect_industry.commit()
             
     connect_industry.close()
     print datetime.now()
