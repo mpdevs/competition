@@ -1,0 +1,69 @@
+#encoding=utf8
+import pandas as pd
+import re
+from glob import glob
+from tqdm import tqdm
+
+
+def tagging_ali_brands_preparation(brands_list):
+    tags = glob(brands_list)
+   
+    w2b = []
+    error_tag_files = []
+    for t in tags:
+        tag_name = t.replace('\\','/').split('/')[-1][:-4]
+        try:
+            f = open(t, 'r')
+            tl = list(set([w.strip('\t\n\r') for w in f if w != '']))
+            l = []
+            for w in tl:
+                for p in ['\\', '+', '*', '?', '^', '$', '|', '.', '[']:
+                    w = w.replace(p, '\\'+p)
+                l.append([w,tag_name])            
+            w2b += l
+        except UnicodeDecodeError, e:
+            error_tag_files.append(t)
+            
+    if len(error_tag_files) > 0:
+        print u"""
+            无法读取以下词库文件，请转码UTF-8后再次尝试。\n\n***\n\n{}
+            """.format('\n'.join(error_tag_files))
+        raise SystemExit()
+    
+    w2b.sort(key=lambda x:(len(x[0]),x[0]), reverse=True)
+    for _ in w2b:
+        _[0] = re.compile(_[0], re.IGNORECASE)
+    
+    return w2b
+
+
+def tagging_ali_brands(data, w2b):
+        
+    BRAND = []
+    N = len(data)
+    pinpai_from_attribute = [0]*N
+    for i, x in enumerate(data['Attribute']):
+        if x is None: continue
+        n = max(x.find(u'品牌:'), x.find(u'品牌：')) + 3
+        if n != 2:
+            pinpai_from_attribute[i] = x[n:x.find(u'，',n)]
+    ST = data['ShopNameTitle'].values
+      
+    for i in tqdm(xrange(len(data))):
+        BRAND.append(0)
+        t = pinpai_from_attribute[i]
+        if t != 0: 
+            t = t.replace(' ', '')
+            for _ in w2b:          
+                if _[0].search(t):
+                    BRAND[-1] = _[1]
+                    break
+                                           
+        if BRAND[-1] == 0 and ST[i] is not None:
+            t = ST[i].replace(' ', '')
+            for _ in w2b:          
+                if _[0].search(t):
+                    BRAND[-1] = _[1]
+                    break
+                    
+    return BRAND
