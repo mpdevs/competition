@@ -229,7 +229,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
             if price == 0: continue
            
-            mustequal = CID2MUSTCUT[category_id]            
+            mustequal = CID2MUSTCUT[category_id][0]            
             cut = CID2CUT[category_id]
             
             minprice = price * (1-setprecetage)

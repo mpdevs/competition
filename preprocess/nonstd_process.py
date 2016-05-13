@@ -135,9 +135,12 @@ def process_annual(industry, db_name, table_from, table_to, one_shop):
             item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
             if price == 0: continue
            
-            mustequal = CID2MUSTCUT[category_id]            
-            cut = CID2CUT[category_id]
-            
+             
+            try:          
+                cut = CID2CUT[category_id]#这个品类没重要维度
+            except:
+                continue
+            mustequal = CID2MUSTCUT[category_id][0]     
             minprice = price * (1-setprecetage)
             maxprice = price * (1+setprecetage)
 

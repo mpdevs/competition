@@ -9,13 +9,9 @@ DICT_FL ={
 
 DICT_MUST = {
     'mp_women_clothing':{
-        'name':[[],
-            [],
-            [],
+        'name':[[]
          ],
-         'value':[[],
-            [],
-            [],
+         'value':[[]
          ]   
     },
     'mp_men_clothing':{
