@@ -12,7 +12,7 @@ from tag_process import tagging_ali_items
 from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
 
 from weighted_jacca import getcut, WJacca
-from helper import parser_label
+from helper import parser_label, getcut, WJacca
 from enums import DICT_EXCLUSIVES, IMPORTANT_ATTR_ENUM, DICT_FL, DICT_MUST
 
 from mp_preprocess.settings import host, user, pwd
@@ -229,7 +229,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             item_id, price, category_id = int(item[1]), float(item[2]), str(item[3])
             if price == 0: continue
            
-            mustequal = CID2MUSTCUT[category_id]            
+            mustequal = CID2MUSTCUT[category_id][0]            
             cut = CID2CUT[category_id]
             
             minprice = price * (1-setprecetage)

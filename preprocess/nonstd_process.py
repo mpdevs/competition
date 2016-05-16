@@ -8,8 +8,7 @@ from datetime import datetime
 import pandas as pd
 from math import ceil
 
-from weighted_jacca import getcut, WJacca
-from helper import parser_label
+from helper import parser_label, getcut, WJacca
 from enums import DICT_FL 
 from nonstd_enums import IMPORTANT_ATTR_ENUM, DICT_MUST
 

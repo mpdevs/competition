@@ -151,6 +151,7 @@ def tagging_ali_brands(data, from_preparation):
     return BRAND
 '''
 
+#这个版本对词循环
 def tagging_ali_brands_preparation(brands_list):
     tags = glob(brands_list)
    

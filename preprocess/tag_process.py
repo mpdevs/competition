@@ -2,7 +2,6 @@
 
 import re
 import pandas as pd
-import itertools as it
 from numpy import array_split
 from glob import glob
 from multiprocessing import Pool

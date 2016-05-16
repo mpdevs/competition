@@ -11,8 +11,7 @@ from math import ceil
 from tag_process import tagging_ali_items
 from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
 
-from weighted_jacca import getcut, WJacca
-from helper import parser_label
+from helper import parser_label, getcut, WJacca
 from enums import DICT_EXCLUSIVES, IMPORTANT_ATTR_ENUM, DICT_FL, DICT_MUST
 
 from mp_preprocess.settings import host, user, pwd

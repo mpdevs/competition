@@ -8,8 +8,8 @@ from datetime import datetime
 import pandas as pd
 from math import ceil
 
-from weighted_jacca import getcut, WJacca
-from helper import parser_label
+from weighted_jacca import 
+from helper import parser_label, getcut, WJacca
 from enums import DICT_FL 
 from nonstd_enums import IMPORTANT_ATTR_ENUM, DICT_MUST
 
@@ -140,7 +140,7 @@ def process_annual(industry, db_name, table_from, table_to, one_shop):
                 cut = CID2CUT[category_id]#这个品类没重要维度
             except:
                 continue
-            mustequal = CID2MUSTCUT[category_id]     
+            mustequal = CID2MUSTCUT[category_id][0]     
             minprice = price * (1-setprecetage)
             maxprice = price * (1+setprecetage)
 
