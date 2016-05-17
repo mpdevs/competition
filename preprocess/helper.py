@@ -37,7 +37,7 @@ def getcut(miu, head):
             for j in xrange(len(head)):
                 if head[j].find(x)+1:
                     t[-1].append(j)
-            if len(t[-1]) == 0:
+            if not t[-1]:
                 del t[-1]
         result.append(t)
     return result

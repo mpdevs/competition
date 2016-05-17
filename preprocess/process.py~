@@ -11,7 +11,6 @@ from math import ceil
 from tag_process import tagging_ali_items
 from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
 
-from weighted_jacca import getcut, WJacca
 from helper import parser_label, getcut, WJacca
 from enums import DICT_EXCLUSIVES, IMPORTANT_ATTR_ENUM, DICT_FL, DICT_MUST
 
@@ -67,7 +66,7 @@ def process_tag(industry, table_name):
         print u'Total number of data: {}, batch_size = {}'.format(n, batch)
                 
         cursor = connect.cursor()
-        for j in xrange(int(ceil(float(len(data))/batch))):
+        for j in xrange(int(ceil(float(n)/batch))):
             print '{} Start batch {}'.format(datetime.now(), j+1)
             batch_data = data.iloc[j*batch:min((j+1)*batch, n)]
             
@@ -217,7 +216,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             cursor_industry.execute("""SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM """+table_from+""" WHERE TaggedBrandName="%s" AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"""%value)
         items = cursor_industry.fetchall()
 
-        if len(items) == 0: continue
+        if not items: continue
 
         label = parser_label([_[0] for _ in items], dict_head)
 
