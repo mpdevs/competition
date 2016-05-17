@@ -7,6 +7,7 @@ from glob import glob
 from datetime import datetime
 import pandas as pd
 from math import ceil
+import itertools as it
 
 from tag_process import tagging_ali_items
 from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
@@ -245,6 +246,28 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             todo_id = todo_data['itemid'].values
             todo_label = parser_label(list(todo_data['label']), dict_head)
             v1 = label[i]
+            for idj, v2 in it.izip(todo_id, todo_label):
+                naflag = False
+                for _ in mustequal:
+                    if sum(v1[_])+sum(v2[_]) != 0 and (v1[_]-v2[_]).any() != 0:
+                        naflag = True
+                        break
+                
+                if naflag:
+                    judge = 0
+                else:
+                    samilarity = WJacca(v1, v2, cut, pvalue)                
+                    if samilarity < jaccavalue[0]: 
+                        judge = 0
+                    elif samilarity > jaccavalue[1]:
+                        judge = 2
+                    else:
+                        judge = 1
+
+                if ifmonthly or judge > 0:
+                    insert_item = (item_id, todo_id[j], judge, 1, value)
+                    insert_items.append(insert_item)
+            '''
             for j in xrange(len(todo_id)):
                 v2 = todo_label[j]
                 naflag = False
@@ -267,7 +290,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
                 if ifmonthly or judge > 0:
                     insert_item = (item_id, todo_id[j], judge, 1, value)
                     insert_items.append(insert_item)
-
+                '''
         if len(insert_items) > 0:
             print '正在插入%d条数据'%len(insert_items)
             cursor_industry.executemany(insert_sql, insert_items)

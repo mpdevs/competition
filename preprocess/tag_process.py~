@@ -2,12 +2,12 @@
 
 import re
 import pandas as pd
-import itertools as it
 from numpy import array_split
 from glob import glob
 from multiprocessing import Pool
 from datetime import datetime
 from tqdm import tqdm
+import itertools as it
 
 def tagging_ali_items(data, tag_list, exclusives, nrows=None, sep=',', processes=None):
 
@@ -193,7 +193,22 @@ def tagging_ali_brands(data, w2b):
         if n != 2:
             pinpai_from_attribute[i] = x[n:x.find(u'，',n)]
     ST = data['ShopNameTitle'].values
-      
+    for a, st in tqdm(it.izip(pinpai_from_attribute, ST)):
+        BRAND.append(0)        
+        if a != 0: 
+            a = a.replace(' ', '')
+            for _ in w2b:          
+                if _[0].search(a):
+                    BRAND[-1] = _[1]
+                    break
+                                           
+        if BRAND[-1] == 0 and st is not None:
+            st = st.replace(' ', '')
+            for _ in w2b:          
+                if _[0].search(t):
+                    BRAND[-1] = _[1]
+                    break
+    '''  
     for i in tqdm(xrange(len(data))):
         BRAND.append(0)
         t = pinpai_from_attribute[i]
@@ -210,7 +225,7 @@ def tagging_ali_brands(data, w2b):
                 if _[0].search(t):
                     BRAND[-1] = _[1]
                     break
-                    
+    '''               
     return BRAND
 
 def tagging(col, tags, split=10000, binary=True, processes=None):
