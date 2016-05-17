@@ -14,6 +14,7 @@ class Command(BaseCommand):
         parser.add_argument('table_to')
         
         parser.add_argument('one_shop')
+        parser.add_argument('version')
         #parser.add_argument('one_shop',nargs='?',default='')
 
     def handle(self, *args, **options):
@@ -24,4 +25,5 @@ class Command(BaseCommand):
         print "行业:",industry
         print "数据从{}.{}读入并写入{}.{}".format(industry, table_from, db_name, table_to)
         one_shop = options['one_shop']
-        process_annual(industry, db_name, table_from, table_to, one_shop)
+        version = options['version']
+        process_annual(industry, db_name, table_from, table_to, one_shop, version)

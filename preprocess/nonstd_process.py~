@@ -8,7 +8,6 @@ from datetime import datetime
 import pandas as pd
 from math import ceil
 
-from weighted_jacca import 
 from helper import parser_label, getcut, WJacca
 from enums import DICT_FL 
 from nonstd_enums import IMPORTANT_ATTR_ENUM, DICT_MUST
@@ -20,7 +19,7 @@ from mp_preprocess.settings import host, user, pwd
 BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
 
 
-def process_annual(industry, db_name, table_from, table_to, one_shop):
+def process_annual(industry, db_name, table_from, table_to, one_shop, version):
     
     #连接
     print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
@@ -57,9 +56,9 @@ def process_annual(industry, db_name, table_from, table_to, one_shop):
         dict_head[head[i]] = i
     
     insert_sql = """
-            INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
+            INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,Version)
             VALUES
-            ('%s',%s,'%s','%s', %s)    
+            ('%s',%s,'%s','%s', %s, %s)    
         """
     all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=10 and MonthlySalesQty=0) or MonthlySalesQty>=10);", connect_industry)
     

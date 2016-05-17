@@ -13,7 +13,8 @@ class Command(BaseCommand):
         parser.add_argument('table_from')
         parser.add_argument('table_to')
         
-        parser.add_argument('one_shop',nargs='?',default='')
+        parser.add_argument('one_shop')
+        parser.add_argument('version')
         #parser.add_argument('one_shop',nargs='?',default='')
 
     def handle(self, *args, **options):
