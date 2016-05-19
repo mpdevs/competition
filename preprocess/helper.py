@@ -109,14 +109,15 @@ def WJacca(u, v, cut, weights):
     return result + weights[1]*r/c
 '''
 def WJacca(x, y, cut, weights):
-    result = 0.0
+    result = 0
     n0 = len(cut[0])
     n1 = len(cut[1])
     a0 = weights[0]/n0
 
     for i in xrange(n0):
         t = cut[0][i]
-        result += a0 * Jaca(x[t],y[t])
+        result += Jaca(x[t],y[t])
+    result *= a0
     
     c = 0.0
     r = 0
