@@ -1,13 +1,16 @@
 # -*- coding: utf-8 -*-
 
 import re
+import numpy as np
 import pandas as pd
+import itertools as it
 from numpy import array_split
 from glob import glob
 from multiprocessing import Pool
 from datetime import datetime
 from tqdm import tqdm
-import itertools as it
+from collections import OrderedDict
+
 
 def tagging_ali_items(data, tag_list, exclusives, nrows=None, sep=',', processes=None):
 
@@ -178,54 +181,35 @@ def tagging_ali_brands_preparation(brands_list):
         raise SystemExit()
     
     w2b.sort(key=lambda x:(len(x[0]),x[0]), reverse=True)
-    for _ in w2b:
-        _[0] = re.compile(_[0].decode('utf8'), re.IGNORECASE)
     
-    return w2b
-def tagging_ali_brands(data, w2b):
+    W2B = OrderedDict()
+    for _ in w2b:
+        W2B[re.compile(_[0].decode('utf8'), re.IGNORECASE)] = _[1]
+    
+    return W2B
+def tagging_ali_brands(att, ST, w2b):
         
-    BRAND = []
-    N = len(data)
-    pinpai_from_attribute = [0]*N
-    for i, x in enumerate(data['Attribute']):
-        if x is None: continue
+    N = len(att)
+    BRAND = [0]*N
+
+    for i, x in enumerate(tqdm(att)):
+        st = ST[i]
+        if x is None and st is None: continue
         n = max(x.find(u'品牌:'), x.find(u'品牌：')) + 3
+        
         if n != 2:
-            pinpai_from_attribute[i] = x[n:x.find(u'，',n)]
-    ST = data['ShopNameTitle'].values
-    for a, st in tqdm(it.izip(pinpai_from_attribute, ST)):
-        BRAND.append(0)        
-        if a != 0: 
-            a = a.replace(' ', '')
-            for _ in w2b:          
-                if _[0].search(a):
-                    BRAND[-1] = _[1]
+            t = x[n:x.find(u',',n)]
+            for p in w2b.iterkeys():
+                if p.search(t):
+                    BRAND[i] = w2b[p]
                     break
-                                           
-        if BRAND[-1] == 0 and st is not None:
-            st = st.replace(' ', '')
-            for _ in w2b:          
-                if _[0].search(t):
-                    BRAND[-1] = _[1]
+        '''          
+        if BRAND[i] == 0 and st is not None:
+            for p in w2b.iterkeys():
+                if p.search(st):
+                    BRAND[i] = w2b[p]
                     break
-    '''  
-    for i in tqdm(xrange(len(data))):
-        BRAND.append(0)
-        t = pinpai_from_attribute[i]
-        if t != 0: 
-            t = t.replace(' ', '')
-            for _ in w2b:          
-                if _[0].search(t):
-                    BRAND[-1] = _[1]
-                    break
-                                           
-        if BRAND[-1] == 0 and ST[i] is not None:
-            t = ST[i].replace(' ', '')
-            for _ in w2b:          
-                if _[0].search(t):
-                    BRAND[-1] = _[1]
-                    break
-    '''               
+        '''
     return BRAND
 
 def tagging(col, tags, split=10000, binary=True, processes=None):

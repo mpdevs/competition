@@ -51,7 +51,7 @@ def process_tag(industry, table_name):
     else:
         query = """
                 SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
-                ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle
+                ItemAttrDesc as Attribute,concat(ShopName,ItemSubTitle,ItemName) as ShopNameTitle
                 FROM %s WHERE NeedReTag='y';
                 """%(table_name)
         
@@ -61,9 +61,13 @@ def process_tag(industry, table_name):
     data = pd.read_sql_query(query, connect) 
     
     n = len(data)
-    if n > 0:       
+    if n > 0:
+        print '{} Preprocess ...'.format(datetime.now())       
         batch = 10000    
         brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)    
+        data['ShopNameTitle'] = data['ShopNameTitle'].str.replace(' ','')
+        data['Attribute'] = data['Attribute'].str.replace(' ','')
+        
         print u'Total number of data: {}, batch_size = {}'.format(n, batch)
                 
         cursor = connect.cursor()
@@ -72,7 +76,7 @@ def process_tag(industry, table_name):
             batch_data = data.iloc[j*batch:min((j+1)*batch, n)]
             
             print '{} Tagging brands ...'.format(datetime.now())            
-            brand = tagging_ali_brands(batch_data, brand_preparation)
+            brand = tagging_ali_brands(batch_data['Attribute'], batch_data['ShopNameTitle'].values, brand_preparation)
             
             print '{} Tagging feature ...'.format(datetime.now())
             label= tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)# 0-1 label          
@@ -133,6 +137,12 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     for i in xrange(len(head)):
         dict_head[head[i]] = i
     
+    if one_shop is None or one_shop=='':
+        cursor_portal.execute("SELECT ShopID FROM shop where IsClient='y';")
+        shops = [int(_[0]) for _ in cursor_portal.fetchall()]
+    else:
+        shops = [int(one_shop)]
+        
     if ifmonthly is False:
         insert_sql = """
             INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
@@ -153,11 +163,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
         for i in xrange(len(shops)):
             shops[i] = shop2brand_dict[shops[i]]
                    
-    if one_shop is None or one_shop=='':
-        cursor_portal.execute("SELECT ShopID FROM shop where IsClient='y';")
-        shops = [int(_[0]) for _ in cursor_portal.fetchall()]
-    else:
-        shops = [int(one_shop)]
+  
     cursor_portal.close()           
     #为每个cid计算该品类下计算相似度的切分
     #先计算重要维度
@@ -249,7 +255,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             for idj, v2 in it.izip(todo_id, todo_label):
                 naflag = False
                 for _ in mustequal:
-                    if sum(v1[_])+sum(v2[_]) != 0 and (v1[_]-v2[_]).any() != 0:
+                    if sum(v1[_]) == sum(v2[_]) > 0 and (v1[_]-v2[_]).any() != 0:
                         naflag = True
                         break
                 
@@ -267,32 +273,10 @@ def process_annual(industry, table_from, table_to, one_shop=None):
                 if ifmonthly or judge > 0:
                     insert_item = (item_id, idj, judge, 1, value)
                     insert_items.append(insert_item)
-            '''
-            for j in xrange(len(todo_id)):
-                v2 = todo_label[j]
-                naflag = False
-                for _ in mustequal:
-                    if sum(v1[_])+sum(v2[_]) != 0 and (v1[_]-v2[_]).any() != 0:
-                        naflag = True
-                        break
-                
-                if naflag:
-                    judge = 0
-                else:
-                    samilarity = WJacca(v1, v2, cut, pvalue)                
-                    if samilarity < jaccavalue[0]: 
-                        judge = 0
-                    elif samilarity > jaccavalue[1]:
-                        judge = 2
-                    else:
-                        judge = 1
 
-                if ifmonthly or judge > 0:
-                    insert_item = (item_id, todo_id[j], judge, 1, value)
-                    insert_items.append(insert_item)
-                '''
+                
         if len(insert_items) > 0:
-            print '正在插入%d条数据'%len(insert_items)
+            print '{} 正在插入{}条数据'.format(datetime.now(), len(insert_items))
             cursor_industry.executemany(insert_sql, insert_items)
             connect_industry.commit()
             
