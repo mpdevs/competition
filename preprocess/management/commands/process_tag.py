@@ -3,7 +3,7 @@ __author__ = 'Dragon'
 
 
 from django.core.management import BaseCommand
-from preprocess.process import process_tag
+from preprocess.tag import process_tag
 
 
 class Command(BaseCommand):

@@ -192,19 +192,18 @@ def tagging_ali_brands(att, ST, w2b):
     N = len(att)
     BRAND = [0]*N
 
-    for i, x in enumerate(tqdm(att)):
-        st = ST[i]
-        if x is None and st is None: continue
-        n = max(x.find(u'品牌:'), x.find(u'品牌：')) + 3
+    for i, x in enumerate(tqdm(att)):       
+        if x is not None:
+            n = max(x.find(u'品牌:'), x.find(u'品牌：')) + 3           
+            if n != 2:
+                t = x[n:x.find(u',',n)]
+                for p in w2b.iterkeys():
+                    if p.search(t):
+                        BRAND[i] = w2b[p]
+                        break
         
-        if n != 2:
-            t = x[n:x.find(u',',n)]
-            for p in w2b.iterkeys():
-                if p.search(t):
-                    BRAND[i] = w2b[p]
-                    break
-                  
-        if BRAND[i] == 0 and st is not None:
+        st = ST[i]          
+        if BRAND[i] == 0 and st is not None:           
             for p in w2b.iterkeys():
                 if p.search(st):
                     BRAND[i] = w2b[p]

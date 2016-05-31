@@ -3,7 +3,7 @@ __author__ = 'Dragon'
 
 
 from django.core.management import BaseCommand
-from preprocess.process import process_annual
+from preprocess.tag import process_annual
 
 
 class Command(BaseCommand):
@@ -11,7 +11,7 @@ class Command(BaseCommand):
         parser.add_argument('industry_db_name')
         parser.add_argument('table_from')
         parser.add_argument('table_to')
-        parser.add_argument('one_shop',,nargs='?',default='')
+        parser.add_argument('one_shop',nargs='?',default='')
 
     def handle(self, *args, **options):
         industry_db_name = options['industry_db_name']
