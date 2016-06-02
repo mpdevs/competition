@@ -1,34 +1,21 @@
-from scipy.spatial.distance import cdist, jaccard
+import MySQLdb
+import pandas as pd
 import numpy as np
-from helper import Jaca
-from datetime import datetime
-
-def nJaca(u,v):
-    t = np.bitwise_or(u != 0, v != 0)
-    q = t.sum()
-    if q == 0: return 0
-    return 1 - float(np.bitwise_and((u != v), t).sum())/ q
+from glob import glob
 
 
-u = np.random.randint(2,size=5)
-v = np.random.randint(2,size=5)
-print np.bitwise_and(u != 0, v != 0).sum()
 
-print sum(u) == sum(v) > 0 and (u-v).any() != 0
-print (u-v).sum() == 0 and u.sum()
-print (u-v).sum() == 0
-print u.sum()
-print nJaca(u,v)
-print Jaca(u,v)
-t=datetime.now()
+host='192.168.1.31'
+user='mpdev'
+pwd='mpdev@2016'
+industry = 'mp_women_clothing'
 
-for i in xrange(100000):
-    sum(u) == sum(v) > 0 and (u-v).any() != 0
-    #nJaca(u,v)
-print datetime.now()-t
-t=datetime.now()
-for i in xrange(100000):    
-    (u-v).sum() ==0 and u.sum()
-    #Jaca(u,v)
-print datetime.now()-t
+connect_industry = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
+all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL;", connect_industry)
 
+for path in glob(paths):
+    t = np.loadtxt(path, dtype=int, delimiter='\t')
+    with open(path, 'w') as f:
+        for line in t:
+            f.writelines('\t'.join([str(line[0]), str(line[1]), ' ', ' ', all_data['label'][all_data == line[0]], all_data['label'][all_data == line[1]], str(line[2])]) + '\n')
+            

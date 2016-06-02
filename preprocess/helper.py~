@@ -4,29 +4,34 @@ __author__ = 'Dragon'
 import os
 import numpy as np
 import pandas as pd
+import json
 
 
-
-def parser_label(a_list, dict_head):
-    n = len(a_list)
-    label = np.zeros((n, len(dict_head)))
+def parser_label(json_list, dict_head):    
+    a_list = []
+    for x in json_list:
+        d = json.loads(x)
+        t = []
+        for i, y in d.iteritems():
+            if isinstance(y, list):
+                t += [i+'-'+z for z in y]
+            else:
+                t.append(i+'-'+y)
+        a_list.append(','.join(t))
+    
+    n = 
+    label = np.zeros((len(a_list), len(dict_head)))
     
     df = pd.read_excel(os.path.dirname(__file__)+'/Combine.xlsx', encoding='utf8')#t,o
-    d = []
-    for i in df.index:
-        t = df['t'][i]
-        for j in df['o'][i].split(','):
-            d.append((j, t))
-       
-    for i in xrange(n): 
-        t = a_list[i].strip("'")
-        for x in d:
-            t = t.replace(x[0], x[1])
+    
+    for i, t in enumerate(a_list): 
+        for j in df.index:
+            t = t.replace(df['o'][j], df['t'][j])
         for x in set(t.split(',')):
             if x!='':
-                label[i][dict_head[x].decode('utf8')] = 1
+                label[i][dict_head[x]] = 1
     return label
-    
+   
 
 def getcut(miu, head):
     result = []

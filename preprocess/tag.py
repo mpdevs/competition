@@ -79,14 +79,30 @@ def process_tag(industry, table_name):
             print '{} Tagging brands ...'.format(datetime.now())            
             brand = tagging_ali_brands(batch_data['Attribute'].values, batch_data['ShopNameTitle'].values, brand_preparation)
             
-            print '{} Tagging feature ...'.format(datetime.now())
+            print '{} Tagging features ...'.format(datetime.now())
             label= tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)# 0-1 label          
             
             feature = label.columns
             label = label.values
             ID = map(int, batch_data['ItemID'].values)  
-            update_items = zip([','.join(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
             
+            def features2json(fs):
+                import json
+                d = dict()
+                for f in fs:
+                    index = [i for i, x in enumerate(f) if x == '-'][-1]
+                    try:
+                        if isinstance(d[f[:index]], list):
+                            d[f[:index]].append(f[index+1:])
+                        else:
+                            d[f[:index]] = [d[f[:index]], f[index+1:]]
+                    except:
+                        d[f[:index]] = f[index+1:]
+                return json.dumps(d, ensure_ascii=False)
+                                 
+            update_items = zip([features2json(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)                      
+            #update_items = zip([','.join(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
+                     
             print u'{} Writing this batch to database ...'.format(datetime.now())
             cursor.executemany(update_sql, update_items)
             connect.commit()

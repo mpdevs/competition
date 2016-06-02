@@ -203,8 +203,7 @@ def tagging_ali_brands(att, ST, w2b):
                         break
         
         st = ST[i]          
-        if BRAND[i] == 0:
-            
+        if BRAND[i] == 0 and st is not None:           
             for p in w2b.iterkeys():
                 if p.search(st):
                     BRAND[i] = w2b[p]
