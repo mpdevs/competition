@@ -26,9 +26,7 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
 
 def process_tag(industry, table_name):
     
-    ifmonthly = True
-    if table_name.find('monthly') == -1:
-        ifmonthly = False
+    ifmonthly = True if table_name.find('month') != -1 else False    
      
     # 词库文件列表，unix style pathname pattern
     TAGLIST =  BASE_DIR + u'/feature/'+industry+'/*.txt'# 标签词库
@@ -44,11 +42,11 @@ def process_tag(industry, table_name):
     if ifmonthly:
         query = """
                 SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
-                ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle
-                FROM %s;
+                ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle, ID 
+                FROM %s ;
                 """%(table_name)
         
-        update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ItemID=%s ;"""
+        update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ID=%s ; """
     else:
         query = """
                 SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
@@ -64,7 +62,7 @@ def process_tag(industry, table_name):
     n = len(data)
     if n > 0:
         print '{} Preprocess ...'.format(datetime.now())       
-        batch = 10000    
+        batch = 40000 #20000的整数倍
         brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)    
         data['ShopNameTitle'] = data['ShopNameTitle'].str.replace(' ','')
         data['Attribute'] = data['Attribute'].str.replace(' ','')
@@ -98,11 +96,15 @@ def process_tag(industry, table_name):
                             d[f[:index]] = [d[f[:index]], f[index+1:]]
                     except:
                         d[f[:index]] = f[index+1:]
-                return json.dumps(d).encode('utf8')
-                                 
-            update_items = zip([features2json(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)                      
+                return json.dumps(d, ensure_ascii=False)
+            
+            if ifmonthly:                     
+                update_items = zip([features2json(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, batch_data['ID'].values)
+            else:
+                update_items = zip([features2json(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
             #update_items = zip([','.join(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
-                     
+            
+           
             print u'{} Writing this batch to database ...'.format(datetime.now())
             cursor.executemany(update_sql, update_items)
             connect.commit()

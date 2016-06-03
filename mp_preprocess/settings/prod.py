@@ -6,6 +6,6 @@ from common import *
 
 
 host='192.168.1.120'
-user='admin'
-pwd='Marc@2016'
+user='dev'
+pwd='Dev_123123'
 

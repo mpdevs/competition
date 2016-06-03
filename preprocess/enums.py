@@ -2,6 +2,25 @@
 __author__ = 'Dragon'
 
 
+Insert_sql = {
+            'Normal':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
+                        VALUES
+                        ('%s',%s,'%s','%s', %s)    
+                     """,
+            'Monthly':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange)
+                        VALUES
+                        ('%s',%s,'%s','%s', %s, %s)    
+                      """                              
+                     }
+Select_sql = {
+            'Normal':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID FROM ",
+            'Monthly':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID, DateRange FROM "
+            }
+
+
+
+
+
 DICT_FL ={
     'mp_women_clothing':[u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"颜色", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"裙型", u"裙长", u"fea", u"fun",u"适用年龄",u"适用人群"],
     'mp_men_clothing':[u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"颜色", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"fea", u"fun",u"适用人群"],

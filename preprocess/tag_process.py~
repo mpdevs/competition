@@ -187,6 +187,7 @@ def tagging_ali_brands_preparation(brands_list):
         W2B[re.compile(_[0].decode('utf8'), re.IGNORECASE)] = _[1]
     
     return W2B
+'''
 def tagging_ali_brands(att, ST, w2b):
         
     N = len(att)
@@ -210,6 +211,47 @@ def tagging_ali_brands(att, ST, w2b):
                     break
         
     return BRAND
+'''
+def tagging_ali_brands(att, ST, w2b, split=10000):
+    pool = Pool()
+    indices = 2 if len(att) < split else len(att) / split 
+    att_list = array_split(att, indices)
+    ST_list = array_split(ST, indices)
+    w2b_list = [w2b] * indices 
+    result = pool.map(brand_core, zip(att_list, ST_list, w2b_list))
+    pool.close()
+    pool.join()
+    t = []
+    for x in result:
+        t += x
+    return t
+    
+def brand_core(a_zip):
+    att = a_zip[0]
+    ST = a_zip[1]
+    w2b = a_zip[2]
+    N = len(att)
+    BRAND = [0]*N
+
+    for i, x in enumerate(tqdm(att)):       
+        if x is not None:
+            n = max(x.find(u'品牌:'), x.find(u'品牌：')) + 3           
+            if n != 2:
+                t = x[n:x.find(u',',n)]
+                for p in w2b.iterkeys():
+                    if p.search(t):
+                        BRAND[i] = w2b[p]
+                        break
+        
+        st = ST[i]          
+        if BRAND[i] == 0 and st is not None:           
+            for p in w2b.iterkeys():
+                if p.search(st):
+                    BRAND[i] = w2b[p]
+                    break
+        
+    return BRAND
+    
 
 def tagging(col, tags, split=10000, binary=True, processes=None):
     """
@@ -223,7 +265,7 @@ def tagging(col, tags, split=10000, binary=True, processes=None):
     """
 
     pool = Pool() if processes is None else Pool(int(processes))
-    indices = 2 if len(col) < split else len(col) / split + 1
+    indices = 2 if len(col) <= split else len(col) / split 
     col_list = array_split(col, indices)
     tags_list = [tags] * indices
     binary_list = [binary] * indices
@@ -248,7 +290,7 @@ def tagging_core(col_tag_binary):
     error_tag_files = []
 
     for t in tqdm(tags):
-        tag_name = t.replace('\\','/').split('/')[-1][:-4]
+        tag_name = t.replace('\\','/').split('/')[-1][:-4].replace(' ', '')
         try:
             f = open(t, 'r')
             reg = '|'.join([w.strip('\t\n\r') for w in f if w != '']).decode('utf-8')

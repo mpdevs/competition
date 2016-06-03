@@ -10,7 +10,7 @@ import numpy as np
 from math import ceil
 from sklearn.linear_model import Ridge
 
-from enums import DICT_FL
+from enums import DICT_FL, Insert_sql, Select_sql
 from helper import parser_label, Jaca, getcut
 from mp_preprocess.settings import host, user, pwd
 
@@ -19,6 +19,14 @@ from mp_preprocess.settings import host, user, pwd
 BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
 
 def process_annual(industry, table_from, table_to, one_shop=None):
+    
+    if table_to.find('monthly'):
+        status = 'Monthly'
+    elif table_to.find('history'):
+        status = 'History'
+    else:
+        status = 'Normal'
+    
     print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
     connect_industry = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
     connect_portal = MySQLdb.Connect(host=host, user=user, passwd=pwd, db='mp_portal', charset='utf8')
@@ -50,12 +58,10 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     else:
         shops = [int(one_shop)]
 
-    insert_sql = """
-            INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
-            VALUES
-            ('%s',%s,'%s','%s', %s)    
-        """
-    all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=10 and MonthlySalesQty=0) or MonthlySalesQty>=10);", connect_industry)
+
+    insert_sql = """INSERT INTO """ + table_to + Insert_sql[status]
+            
+    all_data = pd.read_sql_query(Select_sql[status] + table_from + " WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=10 and MonthlySalesQty=0) or MonthlySalesQty>=10);", connect_industry)
     
     label = parser_label(all_data['label'].values, dict_head)
     id2vec = {int(all_data['itemid'][i]): label[i] for i in xrange(len(all_data))}
@@ -67,7 +73,6 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     cut = getcut([fl], head)[0]
     name2model = dict()
     for path in glob(TRAIN):
-        t = 
         X, y = [], []
         for row in np.asarray(np.loadtxt(path), dtype=int):
             try:#标注数据未筛选
@@ -81,32 +86,14 @@ def process_annual(industry, table_from, table_to, one_shop=None):
         model = Ridge(alpha=alpha, copy_X=True)
         model.fit(X, y)
         name2model[path[len(BASE_DIR + u'/train/'+industry+'/'):-4]] = model
-        '''
-        with open(path, 'r') as f:
-            X = []
-            y = []
-            for line in f:
-                id1, id2, l = line.strip('\n\r').split('\t')
-                id1, id2 = int(id1), int(id2)
-                try:#标注数据未筛选
-                    v1, v2 = id2vec[id1], id2vec[id2]
-                except:
-                    continue
-                X.append([Jaca(v1[c], v2[c]) for c in cut])
-                y.append([1, 0] if int(l) == 1 else [0, 1])      
-            X = np.asarray(X)
-            alpha = max(0.05, np.median(np.linalg.eigvals(X.T.dot(X))))
-            model = Ridge(alpha=alpha, copy_X=True)
-            model.fit(X, y)
-            name2model[path[len(BASE_DIR + u'/train/'+industry+'/'):-4]] = model
-        '''
+        
     print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
     for value in shops:
         print datetime.now(),u'正在删除店铺%s数据 ...'%value
         cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)       
         print datetime.now(),u'正在读取店铺%s ...'%value
-        cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM "+table_from+" WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
+        cursor_industry.execute(Select_sql[status] + table_from + " WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
         items = cursor_industry.fetchall()
 
         if not items: continue
@@ -118,7 +105,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
         havemodel = name2model.keys()
         #对每个商品找竞品
         for i, item in enumerate(tqdm(items)):
-            item_id, price, category_id = int(item[1]), float(item[2]), int(item[3])
+            item_id, price, category_id = int(item[1]), float(item[3]), int(item[4])
             if price == 0: continue
             
             if cid2name[category_id] not in havemodel: continue
@@ -126,9 +113,12 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             maxprice = price * (1+setprecetage)
 
             # 找到所有价格段内的同品类商品
-            todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == category_id) & (all_data.shopid != value) ]
+            if status == 'Normal':
+                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == category_id) & (all_data.shopid != value) ]
+            elif status == 'Monthly':
+                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == category_id) & (all_data.shopid != value) & all_data.DateRange == item[5]]
             if len(todo_data) == 0:continue
-                              
+                             
             #计算相似度
             v1 = shoplabel[i] 
             todo_id = todo_data['itemid'].values
