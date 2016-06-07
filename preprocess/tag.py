@@ -41,16 +41,16 @@ def process_tag(industry, table_name):
     # 选取数据,ItemID用于写回数据库对应的行,分行业打,因为要用不同的词库
     if ifmonthly:
         query = """
-                SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
-                ItemAttrDesc as Attribute,concat(ItemSubTitle,ItemName,ShopName) as ShopNameTitle, ID 
-                FROM %s ;
+                SELECT ItemID,concat_ws(' ',ItemSubTitle,ItemName) as Title,
+                ItemAttrDesc as Attribute,concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle, ID 
+                FROM %s where taggedbrandname="0";
                 """%(table_name)
         
         update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ID=%s ; """
     else:
         query = """
-                SELECT ItemID,concat(ItemSubTitle,ItemName) as Title,
-                ItemAttrDesc as Attribute,concat(ShopName,ItemSubTitle,ItemName) as ShopNameTitle
+                SELECT ItemID,concat_ws(' ',ItemSubTitle,ItemName) as Title,
+                ItemAttrDesc as Attribute,concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle
                 FROM %s WHERE NeedReTag='y';
                 """%(table_name)
         

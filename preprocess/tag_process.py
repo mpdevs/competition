@@ -237,13 +237,13 @@ def brand_core(a_zip):
         if x is not None:
             n = max(x.find(u'品牌:'), x.find(u'品牌：')) + 3           
             if n != 2:
-                t = x[n:x.find(u',',n)]
+                t = x[n:x.find(u',', n)]
                 for p in w2b.iterkeys():
                     if p.search(t):
                         BRAND[i] = w2b[p]
                         break
         
-        st = ST[i]          
+        st = ST[i]                 
         if BRAND[i] is None and st is not None:
             for p in w2b.iterkeys():
                 if p.search(st):
