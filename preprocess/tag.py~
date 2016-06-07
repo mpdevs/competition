@@ -43,7 +43,7 @@ def process_tag(industry, table_name):
         query = """
                 SELECT ItemID,concat_ws(' ',ItemSubTitle,ItemName) as Title,
                 ItemAttrDesc as Attribute,concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle, ID 
-                FROM %s where taggedbrandname=0;
+                FROM %s where taggedbrandname="0";
                 """%(table_name)
         
         update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ID=%s ; """
