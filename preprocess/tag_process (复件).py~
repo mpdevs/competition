@@ -214,7 +214,7 @@ def tagging_ali_brands(att, ST, w2b):
 '''
 def tagging_ali_brands(att, ST, w2b, split=10000):
     pool = Pool()
-    indices = 2 if len(att) <= split else len(att) / split 
+    indices = 2 if len(att) < split else len(att) / split + 1
     att_list = array_split(att, indices)
     ST_list = array_split(ST, indices)
     w2b_list = [w2b] * indices 
@@ -231,7 +231,7 @@ def brand_core(a_zip):
     ST = a_zip[1]
     w2b = a_zip[2]
     N = len(att)
-    BRAND = [None]*N
+    BRAND = [0]*N
 
     for i, x in enumerate(tqdm(att)):       
         if x is not None:
@@ -244,7 +244,7 @@ def brand_core(a_zip):
                         break
         
         st = ST[i]          
-        if BRAND[i] is None and st is not None:
+        if BRAND[i] == 0 and st is not None:           
             for p in w2b.iterkeys():
                 if p.search(st):
                     BRAND[i] = w2b[p]
@@ -252,6 +252,8 @@ def brand_core(a_zip):
         
     return BRAND
     
+
+
 
 def tagging(col, tags, split=10000, binary=True, processes=None):
     """
@@ -265,7 +267,7 @@ def tagging(col, tags, split=10000, binary=True, processes=None):
     """
 
     pool = Pool() if processes is None else Pool(int(processes))
-    indices = 2 if len(col) <= split else len(col) / split 
+    indices = 2 if len(col) < split else len(col) / split + 1
     col_list = array_split(col, indices)
     tags_list = [tags] * indices
     binary_list = [binary] * indices

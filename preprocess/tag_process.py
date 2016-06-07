@@ -231,7 +231,7 @@ def brand_core(a_zip):
     ST = a_zip[1]
     w2b = a_zip[2]
     N = len(att)
-    BRAND = [0]*N
+    BRAND = [None] * N
 
     for i, x in enumerate(tqdm(att)):       
         if x is not None:
@@ -244,7 +244,7 @@ def brand_core(a_zip):
                         break
         
         st = ST[i]          
-        if BRAND[i] == 0 and st is not None:           
+        if BRAND[i] is None and st is not None:
             for p in w2b.iterkeys():
                 if p.search(st):
                     BRAND[i] = w2b[p]

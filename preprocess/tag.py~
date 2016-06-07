@@ -62,7 +62,7 @@ def process_tag(industry, table_name):
     n = len(data)
     if n > 0:
         print '{} Preprocess ...'.format(datetime.now())       
-        batch = 40000 #20000的整数倍
+        batch = 40000 # 20000的整数倍
         brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)    
         data['ShopNameTitle'] = data['ShopNameTitle'].str.replace(' ','')
         data['Attribute'] = data['Attribute'].str.replace(' ','')
@@ -96,7 +96,10 @@ def process_tag(industry, table_name):
                             d[f[:index]] = [d[f[:index]], f[index+1:]]
                     except:
                         d[f[:index]] = f[index+1:]
-                return json.dumps(d, ensure_ascii=False)
+                if not d.keys():
+                    return None
+                else:
+                    return json.dumps(d, ensure_ascii=False).replace('"', '\'')
             
             if ifmonthly:                     
                 update_items = zip([features2json(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, batch_data['ID'].values)
