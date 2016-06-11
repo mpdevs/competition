@@ -10,7 +10,7 @@ import json
 def parser_label(json_list, dict_head):    
     a_list = []
     for x in json_list:
-        d = json.loads(x)
+        d = json.loads(x.replace("'", '"'))
         t = []
         for i, y in d.iteritems():
             if isinstance(y, list):

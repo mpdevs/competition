@@ -10,7 +10,9 @@ import json
 def parser_label(json_list, dict_head):    
     a_list = []
     for x in json_list:
-        d = json.loads(x)
+        print x, type(x)
+        d = json.loads(x.replace("'", '"'))
+        print 1
         t = []
         for i, y in d.iteritems():
             if isinstance(y, list):
@@ -19,9 +21,7 @@ def parser_label(json_list, dict_head):
                 t.append(i+'-'+y)
         a_list.append(','.join(t))
     
-    n = 
     label = np.zeros((len(a_list), len(dict_head)))
-    
     df = pd.read_excel(os.path.dirname(__file__)+'/Combine.xlsx', encoding='utf8')#t,o
     
     for i, t in enumerate(a_list): 

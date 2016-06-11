@@ -291,6 +291,7 @@ def tagging_core(col_tag_binary):
 
     for t in tqdm(tags):
         tag_name = t.replace('\\','/').split('/')[-1][:-4].replace(' ', '')
+        #print tag_name
         try:
             f = open(t, 'r')
             reg = '|'.join([w.strip('\t\n\r') for w in f if w != '']).decode('utf-8')
