@@ -25,9 +25,10 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
 
 def process_annual(industry, table_from, table_to, one_shop=None):
     
-    ifmonthly = True
-    if table_from.find('monthly') == -1:
-        ifmonthly = False
+    if table_to.find('monthly') != -1 or table_to.find('history') != -1:
+        status = 'Monthly'
+    else:
+        status = 'Normal'
     
     #连接
     print '{} 正在连接数据库{} ...'.format(datetime.now(), host)
@@ -57,9 +58,7 @@ def process_annual(industry, table_from, table_to, one_shop=None):
 
     #读取
     head = [x[len(TAGLIST)-5:-4].replace(' ', '') for x in glob(TAGLIST)]
-    dict_head = {}
-    for i in xrange(len(head)):
-        dict_head[head[i]] = i
+    dict_head = {head[i]: i for i in xrange(len(head))}
     
     if one_shop is None or one_shop=='':
         cursor_portal.execute("SELECT ShopID FROM shop where IsClient='y';")
@@ -67,28 +66,14 @@ def process_annual(industry, table_from, table_to, one_shop=None):
     else:
         shops = map(int, one_shop.split(','))
         
-    if ifmonthly is False:
-        insert_sql = """
-            INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
-            VALUES
-            ('%s',%s,'%s','%s', %s)    
-        """
-        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=10 and MonthlySalesQty=0) or MonthlySalesQty>=10);", connect_industry)
-    else:
-        insert_sql = """
-            INSERT INTO """+table_to+"""(SourceItemID,TargetItemID,RelationType,Status,BrandName)
-            VALUES
-            ('%s',%s,'%s','%s', %s)    
-        """       
-        all_data = pd.read_sql_query("SELECT TaggedItemAttr as label, ItemID as itemid, TaggedBrandName as Brand,DiscountPrice,CategoryID FROM "+table_from+" WHERE TaggedItemAttr IS NOT NULL and SalesQty>=10;", connect_industry)
-        cursor_portal.execute("SELECT ShopID,BrandName FROM shop where IsClient='y';")
-        shop2brand = cursor_portal.fetchall()
-        shop2brand_dict = {_[0]:_[1] for _ in shop2brand}
-        for i in xrange(len(shops)):
-            shops[i] = shop2brand_dict[shops[i]]
+    insert_sql = """INSERT INTO """ + table_to + Insert_sql[status]
+            
+    all_data = pd.read_sql_query(Select_sql[status] + table_from + " WHERE TaggedItemAttr IS NOT NULL and ((MonthlyOrders>=10 and MonthlySalesQty=0) or MonthlySalesQty>=10);", connect_industry)
                    
-  
-    cursor_portal.close()           
+    label = parser_label(all_data['label'].values, dict_head)
+    id2vec = {int(all_data['itemid'][i]): label[i] for i in xrange(len(all_data))}
+    cursor_portal.close()   
+            
     #为每个cid计算该品类下计算相似度的切分
     #先计算重要维度
     def find_important(category_id):
@@ -127,29 +112,19 @@ def process_annual(industry, table_from, table_to, one_shop=None):
         assert len(set(must).difference(important)) == 0
         CID2MUSTCUT[cid] = getcut([must], head)
     
-    
-               
+                  
     print u"共{}个店铺:".format(len(shops))
     #开始寻找竞品
     for value in shops:
         
         print datetime.now(),u'正在删除店铺%s数据 ...'%value
-        if ifmonthly is False:
-            cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)
-        else:
-            cursor_industry.execute("""delete from """+table_to+""" where BrandName = "%s" """%value)
-        connect_industry.commit()
-        
+        cursor_industry.execute("delete from "+table_to+" where shopid = %d"%value)       
         print datetime.now(),u'正在读取店铺%s ...'%value
-        if ifmonthly is False:
-            cursor_industry.execute("SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM "+table_from+" WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
-        else:
-            cursor_industry.execute("""SELECT TaggedItemAttr as label, ItemID as itemid, DiscountPrice as price, CategoryID FROM """+table_from+""" WHERE TaggedBrandName="%s" AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"""%value)
+        cursor_industry.execute(Select_sql[status] + table_from + " WHERE ShopID=%d AND TaggedItemAttr IS NOT NULL AND TaggedItemAttr!='';"%value)
         items = cursor_industry.fetchall()
 
         if not items: continue
-
-        label = parser_label([_[0] for _ in items], dict_head)
+        shoplabel = parser_label([_[0] for _ in items], dict_head)
 
         insert_items = []
         print datetime.now(),u'正在计算店铺%s ...'%value
@@ -169,17 +144,17 @@ def process_annual(industry, table_from, table_to, one_shop=None):
             maxprice = price * (1+setprecetage)
 
             # #找到所有价格段内的同品类商品
-            if ifmonthly is False:
-                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.shopid != value) ]
-            else:
-                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == int(category_id)) & (all_data.Brand != value) ]
-            if len(todo_data) == 0:continue
+            if status == 'Normal':
+                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == category_id) & (all_data.shopid != value) ]
+            elif status == 'Monthly':
+                todo_data = all_data[(all_data.DiscountPrice > minprice) & (all_data.DiscountPrice < maxprice) & (all_data.CategoryID == category_id) & (all_data.shopid != value) & all_data.DateRange == item[5]]
+            if len(todo_data) == 0: continue
                        
             #计算相似度
             todo_id = todo_data['itemid'].values
-            todo_label = parser_label(list(todo_data['label']), dict_head)
-            v1 = label[i]
-            for idj, v2 in it.izip(todo_id, todo_label):
+            v1 = shoplabel[i]
+            for idj in todo_id:
+                v2 = id2vec[]
                 naflag = False
                 for _ in mustequal:
                     if (u-v).sum() == 0 and u.sum():

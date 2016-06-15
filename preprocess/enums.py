@@ -10,11 +10,16 @@ Insert_sql = {
             'Monthly':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange)
                         VALUES
                         ('%s',%s,'%s','%s', %s, %s)    
+                      """,
+            'History':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange)
+                        VALUES
+                        ('%s',%s,'%s','%s', %s, %s)    
                       """                              
                      }
 Select_sql = {
             'Normal':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID FROM ",
-            'Monthly':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID, DateRange FROM "
+            'Monthly':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID, DateRange FROM ",
+            'History':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID, DateRange FROM "
             }
 
 
@@ -47,6 +52,16 @@ DICT_MUST = {
                 [],
                 [],
          ]   
+    },
+    'mp_children_clothing':{
+        'name':[
+                [],
+                [],
+         ],
+         'value':[
+                [],
+                [],
+         ]         
     },
     'mp_sports':{
         'name':[
