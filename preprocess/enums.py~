@@ -3,22 +3,13 @@ __author__ = 'Dragon'
 
 
 Insert_sql = {
-            'Normal':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId)
-                        VALUES
-                        ('%s',%s,'%s','%s', %s)    
-                     """,
-            'Monthly':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange)
-                        VALUES
-                        ('%s',%s,'%s','%s', %s, %s)    
-                      """,
-            'History':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange)
-                        VALUES
-                        ('%s',%s,'%s','%s', %s, %s)    
-                      """                              
-                     }
+            'Normal':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId) VALUES('%s',%s,'%s','%s', %s)""",
+            'Monthly':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange) VALUES(%s, %s ,%s ,%s , %s, %s)""",
+            'History':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange) VALUES(%s, %s ,%s ,%s , %s, %s)""" 
+            }
 Select_sql = {
             'Normal':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID FROM ",
-            'Monthly':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID, DateRange FROM ".
+            'Monthly':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID, DateRange FROM ",
             'History':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID, DateRange FROM "
             }
 

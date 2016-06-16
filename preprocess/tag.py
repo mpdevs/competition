@@ -68,11 +68,12 @@ def process_tag(industry, table_name):
         data['Attribute'] = data['Attribute'].str.replace(' ','')
         
         print u'Total number of data: {}, batch_size = {}'.format(n, batch)
-                
+        
+        split_df = [data.iloc[j*batch:min((j+1)*batch, n)] for j in xrange(int(ceil(float(n)/batch)))]        
         cursor = connect.cursor()
-        for j in xrange(int(ceil(float(n)/batch))):
+        for j in xrange(len(split_df)):
             print '{} Start batch {}'.format(datetime.now(), j+1)
-            batch_data = data.iloc[j*batch:min((j+1)*batch, n)]
+            batch_data = split_df[0]
             
             print '{} Tagging brands ...'.format(datetime.now())            
             brand = tagging_ali_brands(batch_data['Attribute'].values, batch_data['ShopNameTitle'].values, brand_preparation)
@@ -111,7 +112,8 @@ def process_tag(industry, table_name):
             print u'{} Writing this batch to database ...'.format(datetime.now())
             cursor.executemany(update_sql, update_items)
             connect.commit()
-        
+            del split_df[0]
+            
         connect.close()
         print u'{} Done!'.format(datetime.now())
 

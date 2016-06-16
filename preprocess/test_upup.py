@@ -27,7 +27,7 @@ for i in xrange(100000):
 print datetime.now()-t
 t=datetime.now()
 for i in xrange(100000):    
-    (u-v).sum() ==0 and u.sum()
+    (u-v).sum() == 0 and u.sum()
     #Jaca(u,v)
 print datetime.now()-t
 
