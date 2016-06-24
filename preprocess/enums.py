@@ -3,9 +3,9 @@ __author__ = 'Dragon'
 
 
 Insert_sql = {
-            'Normal':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId) VALUES('%s',%s,'%s','%s', %s)""",
-            'Monthly':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange) VALUES(%s, %s ,%s, %s , %s, %s)""",
-            'History':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange) VALUES(%s, %s ,%s, %s , %s, %s)""" 
+            'Normal':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,Score) VALUES('%s',%s,'%s','%s', %s, %s)""",
+            'Monthly':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange,Score) VALUES(%s, %s ,%s, %s , %s, %s, %s)""",
+            'History':"""(SourceItemID,TargetItemID,RelationType,Status,ShopId,DateRange,Score) VALUES(%s, %s ,%s, %s , %s, %s, %s)"""
             }
 Select_sql = {
             'Normal':"SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID FROM ",
@@ -18,7 +18,7 @@ Select_sql = {
 
 
 DICT_FL ={
-    'mp_women_clothing':[u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"颜色", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"裙型", u"裙长", u"fea", u"fun",u"适用年龄",u"适用人群"],
+    'mp_women_clothing':[u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"色系", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"裙型", u"裙长", u"fea", u"fun",u"适用年龄",u"适用人群"],
     'mp_men_clothing':[u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型", u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"颜色", u"毛线粗细", u"适用体型", u"裤型", u"裤长", u"fea", u"fun",u"适用人群"],
     'mp_sports':[u"材质",u"儿童泳衣类型",u"厚薄",u"版型",u"闭合方式",u"干湿",u"肩带",u"扣型",u"裤门襟",u"裤型",u"领型",u"露体",u"配件",u"裙型",u"调节性",u"形状",u"袖型",u"泳包适用对象",u"遮体",u"面料",u"男士泳衣类型",u"女士泳衣类型",u"品质",u"轻重",u"容量",u"适用季节",u"适用年龄",u"适用身份",u"适用性别",u"图案",u"颜色",u"泳镜类型",u"泳帽类型",u"fun",u"套餐",u"专业运动"]                
 }

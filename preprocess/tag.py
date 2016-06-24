@@ -1,27 +1,16 @@
-# -*- coding: utf-8 -*-
-
+# -*- coding: utf-8 -*
 import os
 import MySQLdb
-from tqdm import tqdm
-from glob import glob
 from datetime import datetime
 import pandas as pd
-import numpy as np
 from math import ceil
-import itertools as it
-
 from tag_process import tagging_ali_items
 from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
-
-from helper import parser_label, getcut, WJacca
 from enums import DICT_EXCLUSIVES
-
 from mp_preprocess.settings import host, user, pwd
 
 
-
 BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
-
 
 
 def process_tag(industry, table_name):
@@ -29,8 +18,8 @@ def process_tag(industry, table_name):
     ifmonthly = True if table_name.find('month') != -1 else False    
      
     # 词库文件列表，unix style pathname pattern
-    TAGLIST =  BASE_DIR + u'/feature/'+industry+'/*.txt'# 标签词库
-    BRANDSLIST = BASE_DIR + u'/brand/'+industry+'/*.txt'# 品牌词库
+    TAGLIST = BASE_DIR + u'/feature/'+industry+'/*.txt'  # 标签词库
+    BRANDSLIST = BASE_DIR + u'/brand/'+industry+'/*.txt'  # 品牌词库
 
     # EXCLUSIVES 互斥属性类型：以商品详情为准的标签类型
     EXCLUSIVES = DICT_EXCLUSIVES[industry]
@@ -44,17 +33,18 @@ def process_tag(industry, table_name):
                 SELECT ItemID,concat_ws(' ',ItemSubTitle,ItemName) as Title,
                 ItemAttrDesc as Attribute,concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle, ID 
                 FROM %s;
-                """%(table_name)
+                """ % table_name
         
-        update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ID=%s ; """
+        update_sql = """UPDATE """ + table_name + """ SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ID=%s ; """
     else:
         query = """
                 SELECT ItemID,concat_ws(' ',ItemSubTitle,ItemName) as Title,
                 ItemAttrDesc as Attribute,concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle
                 FROM %s WHERE NeedReTag='y';
-                """%(table_name)
+                """ % table_name
         
-        update_sql = """UPDATE """+table_name+""" SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s WHERE ItemID=%s ;"""
+        update_sql = """UPDATE """ + table_name + \
+                     """ SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s WHERE ItemID=%s ;"""
         
     print '{} Loading data ...'.format(datetime.now())
     data = pd.read_sql_query(query, connect) 
@@ -62,10 +52,10 @@ def process_tag(industry, table_name):
     n = len(data)
     if n > 0:
         print '{} Preprocess ...'.format(datetime.now())       
-        batch = 20000 # 20000的整数倍
+        batch = 20000  # 20000的整数倍
         brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)    
-        data['ShopNameTitle'] = data['ShopNameTitle'].str.replace(' ','')
-        data['Attribute'] = data['Attribute'].str.replace(' ','')
+        data['ShopNameTitle'] = data['ShopNameTitle'].str.replace(' ', '')
+        data['Attribute'] = data['Attribute'].str.replace(' ', '')
         
         print u'Total number of data: {}, batch_size = {}'.format(n, batch)
         
@@ -76,10 +66,11 @@ def process_tag(industry, table_name):
             batch_data = split_df[0]
             
             print '{} Tagging brands ...'.format(datetime.now())            
-            brand = tagging_ali_brands(batch_data['Attribute'].values, batch_data['ShopNameTitle'].values, brand_preparation)
+            brand = tagging_ali_brands(batch_data['Attribute'].values,
+                                       batch_data['ShopNameTitle'].values, brand_preparation)
             
             print '{} Tagging features ...'.format(datetime.now())
-            label= tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)# 0-1 label          
+            label = tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)  # 0-1 label
             
             feature = label.columns
             label = label.values
@@ -103,12 +94,12 @@ def process_tag(industry, table_name):
                     return json.dumps(d, ensure_ascii=False).replace('"', '\'')
             
             if ifmonthly:                     
-                update_items = zip([features2json(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, batch_data['ID'].values)
+                update_items = zip([features2json(feature[label[i] == 1]) for i in xrange(len(batch_data))], brand,
+                                   batch_data['ID'].values)
             else:
-                update_items = zip([features2json(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
-            #update_items = zip([','.join(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
-            
-           
+                update_items = zip([features2json(feature[label[i] == 1]) for i in xrange(len(batch_data))], brand, ID)
+            # update_items = zip([','.join(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
+
             print u'{} Writing this batch to database ...'.format(datetime.now())
             cursor.executemany(update_sql, update_items)
             connect.commit()
@@ -118,5 +109,5 @@ def process_tag(industry, table_name):
         print u'{} Done!'.format(datetime.now())
 
     else:
-        print u'Data in %s had been tagged!'%table_name
+        print u'Data in %s had been tagged!' % table_name
 

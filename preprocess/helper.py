@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 __author__ = 'Dragon'
-
 import os
 import numpy as np
 import pandas as pd
 import json
 
+DEBUG_FLAG = True
 
 def parser_label(json_list, dict_head):    
     a_list = []
@@ -20,16 +20,16 @@ def parser_label(json_list, dict_head):
         a_list.append(','.join(t))
     
     label = np.zeros((len(a_list), len(dict_head)))
-    df = pd.read_excel(os.path.dirname(__file__)+'/Combine.xlsx', encoding='utf8')#t,o
+    #df = pd.read_excel(os.path.dirname(__file__)+'/Combine.xlsx', encoding='utf8')#t,o
     
-    for i, t in enumerate(a_list): 
-        for j in df.index:
-            t = t.replace(df['o'][j], df['t'][j])
+    for i, t in enumerate(a_list):
+        #for j in df.index:
+            #t = t.replace(df['o'][j], df['t'][j])
         for x in set(t.split(',')):
             if x!='':
                 label[i][dict_head[x]] = 1
     return label
-   
+
 
 def getcut(miu, head):
     result = []
@@ -75,3 +75,45 @@ def WJacca(x, y, cut, weights):
         return result
     else:
         return result + min(weights[1]/c, a0) * r
+
+
+def label_rebuilt_to_set(unicode_string):
+    j = json.loads(unicode_string.replace("'", '"'))
+    j_list = []
+    for k, v in j.iteritems():
+        if isinstance(v, list):
+            for i in v:
+                j_list.append(k + i)
+        else:
+            j_list.append(k + v)
+    return set(j_list)
+
+
+def db_json_to_python_json(json_string):
+    return json.loads(json_string.replace("'", '"'))
+
+
+def string_or_unicode_to_list(string_or_unicode):
+    if isinstance(string_or_unicode, str):
+        ret_list = string_or_unicode.split('\r\n')
+    elif isinstance(string_or_unicode, unicode):
+        ret_list = string_or_unicode.split('\r\n')
+    else:
+        ret_list = string_or_unicode
+    return ret_list
+
+
+def debug(var):
+    if DEBUG_FLAG:
+        print var
+
+
+if __name__ == '__main__':
+    test_string = "{'att-图案': '花式', 'att-适用季节': '秋季', " \
+        "'att-色系': '多色', 'app-感官': ['优雅', '淑女', '时尚'], " \
+        "'att-面料': '蕾丝', 'att-做工工艺': '拼接', " \
+        "'att-款式-裙长': '短裙', 'fun': '打底', " \
+        "'att-做工工艺-流行元素': ['镂空', '蕾丝拼接', '印花', '纱网'], " \
+        "'att-款式-裙型': 'A字裙', " \
+        "'app-风格': ['通勤', '百搭', '韩风']}"
+    label_rebuilt_to_set(test_string)

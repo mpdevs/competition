@@ -17,7 +17,7 @@ class Command(BaseCommand):
         industry_db_name = options['industry_db_name']
         table_from = options['table_from']
         table_to = options['table_to']
-        print "行业:",industry_db_name
+        print "行业:", industry_db_name
         print "数据从{}读入并写入{}".format(table_from, table_to)
         one_shop = options['one_shop']
         process_annual(industry_db_name, table_from, table_to, one_shop)
