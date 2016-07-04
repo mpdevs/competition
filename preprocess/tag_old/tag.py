@@ -14,8 +14,11 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
 
 
 def process_tag(industry, table_name):
- 
+    
+    ifmonthly = True if table_name.find('month') != -1 else False    
+     
     # 词库文件列表，unix style pathname pattern
+    TAGLIST = BASE_DIR + u'/feature/'+industry+'/*.txt'  # 标签词库
     BRANDSLIST = BASE_DIR + u'/brand/'+industry+'/*.txt'  # 品牌词库
 
     # EXCLUSIVES 互斥属性类型：以商品详情为准的标签类型
@@ -23,16 +26,24 @@ def process_tag(industry, table_name):
 
     print '{} Connecting DB{} ...'.format(datetime.now(), host)
     connect = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset='utf8')
-    portal = MySQLdb.Connect(host=host, user=user, passwd=pwd, db='mp_portal', charset='utf8')
 
-    # 选取商品数据
-    query = """
-                SELECT ItemID, CategoryID, concat_ws(' ',ItemSubTitle,ItemName) as Title,
-                ItemAttrDesc as Attribute, concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle
+    # 选取数据,ItemID用于写回数据库对应的行,分行业打,因为要用不同的词库
+    if ifmonthly:
+        query = """
+                SELECT ItemID,concat_ws(' ',ItemSubTitle,ItemName) as Title,
+                ItemAttrDesc as Attribute,concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle, ID 
+                FROM %s;
+                """ % table_name
+        
+        update_sql = """UPDATE """ + table_name + """ SET TaggedItemAttr=%s, TaggedBrandName=%s WHERE ID=%s ; """
+    else:
+        query = """
+                SELECT ItemID,concat_ws(' ',ItemSubTitle,ItemName) as Title,
+                ItemAttrDesc as Attribute,concat_ws(' ',ShopName,ItemSubTitle,ItemName) as ShopNameTitle
                 FROM %s WHERE NeedReTag='y';
                 """ % table_name
         
-    update_sql = """UPDATE """ + table_name + \
+        update_sql = """UPDATE """ + table_name + \
                      """ SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s WHERE ItemID=%s ;"""
         
     print '{} Loading data ...'.format(datetime.now())
@@ -41,19 +52,10 @@ def process_tag(industry, table_name):
     n = len(data)
     if n > 0:
         print '{} Preprocess ...'.format(datetime.now())       
-        batch = 20000  # 20000的整数倍    
+        batch = 20000  # 20000的整数倍
+        brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)    
         data['ShopNameTitle'] = data['ShopNameTitle'].str.replace(' ', '')
         data['Attribute'] = data['Attribute'].str.replace(' ', '')
-        
-        # 标签准备
-        brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)
-        tag_dicts = pd.read_sql_query("SELECT attr_value.CID, attr_value.Attrname, attr_value.DisplayName, attr_value.AttrValue, attr_dict.Flag from attr_value INNER JOIN attr_dict on attr_value.AttrName=attr_dict.AttrName where attr_dict.IsTag='y'", portal)    
-        tag_preparation = dict()
-             
-        for cid in tag_dicts['CID'].unique():
-            tag_preparation[int(cid)] = {(x[1], x[2], x[4]): x[3].rstrip(',').replace(' ', '').split(',') for x in tag_dicts[tag_dicts['CID'] == cid].values}
-            
-            
         
         print u'Total number of data: {}, batch_size = {}'.format(n, batch)
         
@@ -64,21 +66,45 @@ def process_tag(industry, table_name):
             batch_data = split_df[0]
             
             print '{} Tagging brands ...'.format(datetime.now())            
-            brand = tagging_ali_brands(batch_data['Attribute'].values, batch_data['ShopNameTitle'].values, brand_preparation)
+            brand = tagging_ali_brands(batch_data['Attribute'].values,
+                                       batch_data['ShopNameTitle'].values, brand_preparation)
             
             print '{} Tagging features ...'.format(datetime.now())
-            label = tagging_ali_items(batch_data, tag_preparation_ali, tag_preparation_MP, EXCLUSIVES)
+            label = tagging_ali_items(batch_data, TAGLIST, EXCLUSIVES)  # 0-1 label
             
+            feature = label.columns
+            label = label.values
             ID = map(int, batch_data['ItemID'].values)  
             
-            update_items = zip(label, brand, ID)
+            def features2json(fs):
+                import json
+                d = dict()
+                for f in fs:
+                    index = [i for i, x in enumerate(f) if x == '-'][-1]
+                    try:
+                        if isinstance(d[f[:index]], list):
+                            d[f[:index]].append(f[index+1:])
+                        else:
+                            d[f[:index]] = [d[f[:index]], f[index+1:]]
+                    except:
+                        d[f[:index]] = f[index+1:]
+                if not d.keys():
+                    return None
+                else:
+                    return json.dumps(d, ensure_ascii=False).replace('"', '\'')
+            
+            if ifmonthly:                     
+                update_items = zip([features2json(feature[label[i] == 1]) for i in xrange(len(batch_data))], brand,
+                                   batch_data['ID'].values)
+            else:
+                update_items = zip([features2json(feature[label[i] == 1]) for i in xrange(len(batch_data))], brand, ID)
             # update_items = zip([','.join(feature[label[i]==1]) for i in xrange(len(batch_data))], brand, ID)
 
             print u'{} Writing this batch to database ...'.format(datetime.now())
             cursor.executemany(update_sql, update_items)
             connect.commit()
             del split_df[0]
-           
+            
         connect.close()
         print u'{} Done!'.format(datetime.now())
 
