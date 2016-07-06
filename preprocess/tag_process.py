@@ -85,7 +85,7 @@ def brand_core(a_zip):
         
     return BRAND
     
-def tagging_ali_items(batch_data, tag_preparation, EXCLUSIVES):
+def tagging_ali_items(data, tag_preparation, EXCLUSIVES):
     import json
     result = []
     for i in tqdm(data.index):

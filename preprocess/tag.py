@@ -47,7 +47,9 @@ def process_tag(industry, table_name):
         
         # 标签准备
         brand_preparation = tagging_ali_brands_preparation(BRANDSLIST)
-        tag_dicts = pd.read_sql_query("SELECT attr_value.CID, attr_value.Attrname, attr_value.DisplayName, attr_value.AttrValue, attr_dict.Flag from attr_value INNER JOIN attr_dict on attr_value.AttrName=attr_dict.AttrName where attr_dict.IsTag='y'", portal)    
+        # tag_dicts = pd.read_sql_query("SELECT attr_value.CID, attr_value.Attrname, attr_value.DisplayName, attr_value.AttrValue, attr_dict.Flag from attr_value INNER JOIN attr_dict on attr_value.AttrName=attr_dict.AttrName where attr_dict.IsTag='y'", portal)    
+        industry_id = pd.read_sql_query("SELECT IndustryID from industry where DBName='{}'".format(industry), portal)['IndustryID'].values[0]
+        tag_dicts = pd.read_sql_query("SELECT CID, Attrname, DisplayName, AttrValue, Flag from attr_value where IsTag='y' and IndustryID={}".format(industry_id), portal)     
         tag_preparation = dict()
              
         for cid in tag_dicts['CID'].unique():
@@ -67,7 +69,7 @@ def process_tag(industry, table_name):
             brand = tagging_ali_brands(batch_data['Attribute'].values, batch_data['ShopNameTitle'].values, brand_preparation)
             
             print '{} Tagging features ...'.format(datetime.now())
-            label = tagging_ali_items(batch_data, tag_preparation_ali, tag_preparation_MP, EXCLUSIVES)
+            label = tagging_ali_items(batch_data, tag_preparation, EXCLUSIVES)
             
             ID = map(int, batch_data['ItemID'].values)  
             
