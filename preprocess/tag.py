@@ -7,13 +7,15 @@
 """
 import os
 import MySQLdb
-from datetime import datetime
 import pandas as pd
+from datetime import datetime
 from math import ceil
-from tag_process import tagging_ali_items
-from tag_process import tagging_ali_brands_preparation, tagging_ali_brands
+from tag_process import tagging_ali_brands_preparation, tagging_ali_brands, tagging_items, tagging_material
 from enums import DICT_EXCLUSIVES
-from mp_preprocess.settings import host, user, pwd
+# product
+host = '192.168.1.120'
+user = 'dev'
+pwd = 'Dev_123123'
 
 
 BASE_DIR = os.path.join(os.path.dirname(__file__), 'dicts')
@@ -46,7 +48,7 @@ def process_tag(industry, table_name):
     FROM {0} WHERE NeedReTag='y';""".format(table_name)
 
     update_sql = """UPDATE {0}
-    SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s
+    SET TaggedItemAttr=%s, NeedReTag='n', TaggedBrandName=%s, TaggedMaterial=%s
     WHERE ItemID=%s ;""".format(table_name)
 
     print '{} Loading data ...'.format(datetime.now())
@@ -67,29 +69,38 @@ def process_tag(industry, table_name):
         brand_preparation = tagging_ali_brands_preparation(brand_list)
 
         # region 合并成一个Query
-        industry_id_query = "SELECT IndustryID FROM industry WHERE DBName='{}'".format(industry)
-        industry_id = pd.read_sql_query(industry_id_query, portal)['IndustryID'].values[0]
-
-        tag_dicts_query = """SELECT CID, Attrname, DisplayName, AttrValue, Flag
-        FROM attr_value
-        WHERE IsTag='y'
-        AND
-        IndustryID={}""".format(industry_id)
+        # industry_id_query = "SELECT IndustryID FROM industry WHERE DBName='{}'".format(industry)
+        # industry_id = pd.read_sql_query(industry_id_query, portal)['IndustryID'].values[0]
+        #
+        # tag_dicts_query = """SELECT CID, Attrname, DisplayName, AttrValue, Flag
+        # FROM attr_value
+        # WHERE IsTag='y'
+        # AND
+        # IndustryID={}""".format(industry_id)
+        tag_dicts_query = """SELECT a.CID, a.Attrname, a.DisplayName, a.AttrValue, a.Flag
+        FROM mp_portal.attr_value AS a
+        JOIN mp_portal.industry AS i
+        ON a.IndustryID = i.IndustryID
+        WHERE a.IsTag='y'
+        AND i.DBName ='{0}'
+        """.format(industry)
         # endregion
+
         tag_dicts = pd.read_sql_query(tag_dicts_query, portal)
 
         # tag_preparation 打标签用和 brand_preparation类似
         tag_preparation = dict()
 
+        # 每个类别的商品单独处理
         for cid in tag_dicts['CID'].unique():
             # {"CID": {("attr_name", "display_name", "attr_flag"): list}}
             # dict(dict[tuple](list))
             # 抓取的数据会有截尾逗号和空格
-            # x[1] = CID
-            # x[2] = Attrname
-            # x[3] = DisplayName
-            # x[4] = AttrValue
-            # x[5] = Flag
+            # x[0] = CID
+            # x[1] = Attrname
+            # x[2] = DisplayName
+            # x[3] = AttrValue
+            # x[4] = Flag
             tag_preparation[int(cid)] = {(x[1], x[2], x[4]): x[3].rstrip(',').replace(' ', '').split(',')
                                          # type(x) = ndarray
                                          for x in tag_dicts[tag_dicts['CID'] == cid].values}
@@ -98,10 +109,10 @@ def process_tag(industry, table_name):
 
         # 切分数据
         # split_df = map(pd.DataFrame(), np.array_split(data.values, n/batch))
-        split_df = [data.iloc[j*batch:min((j+1)*batch, n)] for j in xrange(int(ceil(float(n)/batch)))]
+        split_df = [data.iloc[j * batch: min((j + 1) * batch, n)] for j in xrange(int(ceil(float(n) / batch)))]
         cursor = connect.cursor()
         for j in xrange(len(split_df)):
-            print '{} Start batch {}'.format(datetime.now(), j+1)
+            print '{} Start batch {}'.format(datetime.now(), j + 1)
             batch_data = split_df[0]
 
             print '{} Tagging brands ...'.format(datetime.now())
@@ -113,11 +124,12 @@ def process_tag(industry, table_name):
                                        brand_preparation)
 
             print '{} Tagging features ...'.format(datetime.now())
-            label = tagging_ali_items(batch_data, tag_preparation, exclusive_list)
-
+            label = tagging_items(batch_data, tag_preparation, exclusive_list)
+            # 面料标签
+            material_label = tagging_material(batch_data, tag_preparation)
             item_ids = map(int, batch_data['ItemID'].values)
 
-            update_items = zip(label, brand, item_ids)
+            update_items = zip(label, brand, material_label, item_ids)
 
             print u'{} Writing this batch to database ...'.format(datetime.now())
             cursor.executemany(update_sql, update_items)
@@ -129,3 +141,7 @@ def process_tag(industry, table_name):
 
     else:
         print u'Data in {} had been tagged!'.format(table_name)
+
+
+if __name__ == '__main__':
+    process_tag('mp_women_clothing', 'item_dev')
