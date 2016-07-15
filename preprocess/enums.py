@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-__author__ = 'Dragon'
+# __author__ = 'Dragon, Huang_Yanhua, John'
+DEBUG = True
 
 
 Insert_sql = {
@@ -11,7 +12,6 @@ Insert_sql = {
             VALUES(%s, %s ,%s, %s , %s, %s, %s)"""
             }
 
-
 Select_sql = {
             'Normal': """SELECT TaggedItemAttr as label, ItemID as itemid, ShopId as shopid, DiscountPrice, CategoryID
             FROM """,
@@ -21,7 +21,42 @@ Select_sql = {
             FROM """
             }
 
+CATEGORY_QUERY = "SELECT DISTINCT CategoryID, CategoryName FROM mp_portal.category {0} ;"
 
+ATTR_META_QUERY = """SELECT a.CID, a.Attrname, a.DisplayName, a.AttrValue, a.Flag FROM mp_portal.attr_value AS a
+JOIN mp_portal.industry AS i ON a.IndustryID = i.IndustryID WHERE a.IsCalc='y' AND i.DBName ='{0}'"""
+
+SHOP_QUERY = "SELECT ShopID FROM shop where IsClient='y';"
+
+TRAINING_DATA_QUERY = """SELECT a1.TaggedItemAttr AS attr1, a2.TaggedItemAttr AS attr2, c.score
+FROM {0}.tagged_competitive_items c JOIN {0}.TaggedItemAttr a1 ON a1.ItemID = c.SourceItemID
+JOIN {0}.TaggedItemAttr a2 ON a2.ItemID = c.TargetItemID WHERE c.CategoryID = {1}
+AND a1.TaggedItemAttr LIKE ',%' AND a2.TaggedItemAttr LIKE ',%';"""
+
+CUSTOMER_ITEM_QUERY = """SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange
+FROM {0}.{1} WHERE ShopID = {2} AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""
+
+COMPETITIVE_ITEM_QUERY = """SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange
+FROM {0}.{1} WHERE (ShopID != {2} OR ShopID IS NULL) AND CategoryID = {3}
+AND DateRange = '{4}' AND TaggedItemAttr LIKE ',%';"""
+
+SET_SCORES_QUERY = """INSERT INTO {0}.{1}
+(ShopID, SourceItemID, TargetItemID, Score ,DateRange, CategoryID, RelationType, Status)
+VALUES (%s, %s, %s, %s, %s, %s, 1, 1);"""
+
+DELETE_SCORES_QUERY = "DELETE FROM {0}.{1} WHERE ShopID = {2} AND CategoryID = {3} AND DateRange = '{4}';"
+
+GET_MAX_DATE_RANGE_QUERY = "SELECT MAX(DateRange) AS DateRange FROM {0}.{1};"
+
+"""
+废弃
+"""
+ATTRIBUTES_QUERY = """SELECT ItemID, TaggedItemAttr FROM {0} WHERE TaggedItemAttr IS NOT NULL AND TaggedItemAttr != ''
+AND TaggedItemAttr LIKE ',%' {1};"""
+
+"""
+废弃
+"""
 DICT_FL = {
     'mp_women_clothing': [u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型",
                           u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"色系", u"毛线粗细",

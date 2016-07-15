@@ -122,7 +122,7 @@ def tagging_ali_items(data, tag_preparation, exclusive_list):
             # 会影响竟品的数据抽取
             result.append('')
             continue
-            
+
         attr = data['Attribute'][i]
         title = data['Title'][i]
         # type(name) = tuple
@@ -277,19 +277,15 @@ def tagging_material(data, tag_preparation):
                     # attr[j1: j2] 切割单个属性的方法
                     # 注： 材质成分是有很多种情况的下，分隔符是" "
                     # 先把材质成分的所有数据拿出来, 根据空格分片
-                    # print attr[j1 + len(name[1])+1: j2]
                     material_tmp_list = attr[j1 + len(name[1])+1: j2].split(' ')
                     if u'毛' in attr[j1 + len(name[1])+1: j2]:
                         fur_dump_list.append(attr[j1 + len(name[1])+1: j2])
-                    # for material in material_tmp_list:
-                    #     print u"material_tmp_list: {}".format(material)
                     # 然后用正则取出其中的数值，去除百分号后和数值后，剩余的部分要比较是包含括号
                     for material in material_tmp_list:
                         try:
                             purity = re.findall(r"\d+\.?\d*", material)[0]  # 这里返回的是list，只有一个长度
                         except IndexError:
                             purity = '0'
-                        # print u"material = {0}, purity = {1}".format(material, purity)
                         material = material.replace(purity, '').replace('%', '')
                         if purity:
                             purity = float(purity)
@@ -307,7 +303,6 @@ def tagging_material(data, tag_preparation):
                     total = 100.0
                     fix_list = []
                     for k, v in material_purity_dict.iteritems():
-                        # print k, v
                         if v == 0:
                             fix_list.append(k)
                         else:
@@ -319,21 +314,27 @@ def tagging_material(data, tag_preparation):
                         for item in fix_list:
                             material_purity_dict[item] = round(total / len(fix_list))
                     # 将字典信息拼接至字符串
+                    # 其他的不要，留坑
                     for k, v in material_purity_dict.iteritems():
-                        row += u'{0}{1}%,'.format(k, v)
+                        row += u'{0}:{1},'.format(k, v)
             else:
-                # print 'Unknown type of tag: {}'.format(name[2])
+                print 'Unknown type of tag: {}'.format(name[2])
                 raise SystemExit()
         # 如果没有匹配到的属性，
         if len(row) == 1:
             result.append('')
             continue
+        elif len(row) > 512:
+            print u"Warning, material too long value={}".format(row)
+            result.append('')
+            continue
         else:
             result.append(row)
-    import pickle
-    f = open(u'毛.pickle', 'wb')
-    pickle.dump(fur_dump_list, f)
-    f.close()
+            continue
+    # import pickle
+    # f = open(u'毛.pickle', 'wb')
+    # pickle.dump(fur_dump_list, f)
+    # f.close()
     return result
 
 

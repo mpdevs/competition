@@ -308,8 +308,6 @@ def get_essential_dict(file_name= u'essentialvalue.csv'):
         level3 = _row[2].decode('utf-8')
 
         if float(_row[-2]) >= 0.9 and int(_row[-1]) >= 6:
-            #for i in _row:
-                #print i
             pass
         else:
             continue
