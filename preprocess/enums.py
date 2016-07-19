@@ -1,8 +1,50 @@
 # -*- coding: utf-8 -*-
-# __author__ = 'Dragon, Huang_Yanhua, John'
-DEBUG = True
+# __author__ = 'Huang_Yanhua, John'
+DEBUG = False
 
+CATEGORY_QUERY = u"""SELECT DISTINCT c.CategoryID, c.CategoryName FROM mp_portal.category c JOIN mp_portal.industry i
+ON c.IndustryID = i.IndustryID WHERE i.DBName = '{0}' {1};"""
 
+ATTR_META_QUERY = u"""SELECT a.CID, a.Attrname, a.DisplayName, a.AttrValue, a.Flag FROM mp_portal.attr_value AS a
+JOIN mp_portal.industry AS i ON a.IndustryID = i.IndustryID WHERE a.IsCalc='y' AND i.DBName ='{0}'"""
+
+SHOP_QUERY = u"SELECT ShopID FROM shop where IsClient='y';"
+
+TRAINING_DATA_QUERY = u"""SELECT a1.TaggedItemAttr AS attr1, a2.TaggedItemAttr AS attr2, c.score
+FROM tagged_competitive_items c JOIN TaggedItemAttr a1 ON a1.ItemID = c.SourceItemID
+JOIN TaggedItemAttr a2 ON a2.ItemID = c.TargetItemID WHERE c.CategoryID = {0}
+AND a1.TaggedItemAttr LIKE ',%' AND a2.TaggedItemAttr LIKE ',%';"""
+
+SET_SCORES_QUERY = u"""INSERT INTO {0}.{1}
+(ShopID, SourceItemID, TargetItemID, Score ,DateRange, CategoryID, RelationType, Status)
+VALUES (%s, %s, %s, %s, %s, %s, 1, 1);"""
+
+DELETE_SCORES_QUERY = u"DELETE FROM {0}.{1} WHERE ShopID = {2} AND CategoryID = {3} AND DateRange = '{4}';"
+
+MAX_DATE_RANGE_QUERY = u"SELECT MAX(DateRange) AS DateRange FROM {0}.{1};"
+
+ESSENTIAL_DIMENSIONS_QUERY = u"""SELECT CategoryID, AttrName, AttrValue FROM essential_dimensions
+WHERE MoreThanTwoNegPercent >= {0} AND ConfidenceLevel >= {1};"""
+
+ITEMS_DATA_QUERY = u"""SELECT ItemID, CategoryID, concat_ws(' ',ItemSubTitle,ItemName) AS Title,
+ItemAttrDesc AS Attribute, concat_ws(' ',ShopName,ItemSubTitle,ItemName) AS ShopNameTitle
+FROM {0} WHERE TaggedItemAttr NOT LIKE ',%' {1};"""
+
+CUSTOMER_ITEM_QUERY = u"""SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange
+FROM {0} WHERE ShopID = {1} AND CategoryID = {2} AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""
+
+COMPETITIVE_ITEM_QUERY = u"""SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange
+FROM {0} WHERE (ShopID != {1} OR ShopID IS NULL) AND CategoryID = {2}
+AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""
+
+PREDICT_PAIR_INFO_QUERY = u"""SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange FROM {0}
+WHERE ItemID IN ({1}, {2}) AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""
+
+TRAIN_PAIR_INFO_QUERY = u"SELECT * FROM TaggedItemAttr WHERE ItemID IN ({0}, {1});"
+
+GET_CATEGORY_ID_QUERY = u"SELECT CategoryID FROM {0} WHERE ItemID = {1} ORDER BY DateRange"
+
+# region 废弃
 Insert_sql = {
             'Normal': """(SourceItemID,TargetItemID,RelationType,Status,ShopId,Score)
             VALUES('%s',%s,'%s','%s', %s, %s)""",
@@ -21,42 +63,9 @@ Select_sql = {
             FROM """
             }
 
-CATEGORY_QUERY = "SELECT DISTINCT CategoryID, CategoryName FROM mp_portal.category {0} ;"
-
-ATTR_META_QUERY = """SELECT a.CID, a.Attrname, a.DisplayName, a.AttrValue, a.Flag FROM mp_portal.attr_value AS a
-JOIN mp_portal.industry AS i ON a.IndustryID = i.IndustryID WHERE a.IsCalc='y' AND i.DBName ='{0}'"""
-
-SHOP_QUERY = "SELECT ShopID FROM shop where IsClient='y';"
-
-TRAINING_DATA_QUERY = """SELECT a1.TaggedItemAttr AS attr1, a2.TaggedItemAttr AS attr2, c.score
-FROM {0}.tagged_competitive_items c JOIN {0}.TaggedItemAttr a1 ON a1.ItemID = c.SourceItemID
-JOIN {0}.TaggedItemAttr a2 ON a2.ItemID = c.TargetItemID WHERE c.CategoryID = {1}
-AND a1.TaggedItemAttr LIKE ',%' AND a2.TaggedItemAttr LIKE ',%';"""
-
-CUSTOMER_ITEM_QUERY = """SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange
-FROM {0}.{1} WHERE ShopID = {2} AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""
-
-COMPETITIVE_ITEM_QUERY = """SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange
-FROM {0}.{1} WHERE (ShopID != {2} OR ShopID IS NULL) AND CategoryID = {3}
-AND DateRange = '{4}' AND TaggedItemAttr LIKE ',%';"""
-
-SET_SCORES_QUERY = """INSERT INTO {0}.{1}
-(ShopID, SourceItemID, TargetItemID, Score ,DateRange, CategoryID, RelationType, Status)
-VALUES (%s, %s, %s, %s, %s, %s, 1, 1);"""
-
-DELETE_SCORES_QUERY = "DELETE FROM {0}.{1} WHERE ShopID = {2} AND CategoryID = {3} AND DateRange = '{4}';"
-
-GET_MAX_DATE_RANGE_QUERY = "SELECT MAX(DateRange) AS DateRange FROM {0}.{1};"
-
-"""
-废弃
-"""
 ATTRIBUTES_QUERY = """SELECT ItemID, TaggedItemAttr FROM {0} WHERE TaggedItemAttr IS NOT NULL AND TaggedItemAttr != ''
 AND TaggedItemAttr LIKE ',%' {1};"""
 
-"""
-废弃
-"""
 DICT_FL = {
     'mp_women_clothing': [u"感官", u"风格", u"做工工艺", u"厚薄", u"图案", u"扣型", u"版型", u"廓型", u"领型", u"袖型",
                           u"腰型", u"衣长", u"袖长", u"衣门襟", u"穿着方式", u"组合形式", u"面料", u"色系", u"毛线粗细",
@@ -253,3 +262,4 @@ IMPORTANT_ATTR_ENUM = {
         ]
     }
 }
+# endregion

@@ -5,6 +5,12 @@ import json
 import random
 from tqdm import tqdm
 from collections import OrderedDict
+from enums import DEBUG
+
+
+def debug(var):
+    if DEBUG:
+        print (var)
 
 
 def tag_to_dict(df):
@@ -111,7 +117,7 @@ def sample_balance(train_x, train_y):
     :param train_y: numpy.array
     :return: numpy.array
     """
-    t = np.array(range(len(train_y)))
+    t = np.array(xrange(len(train_y)))
     t = random.sample(t[train_y < 0.5], sum(train_y > 0.5)) + t[train_y > 0.5].tolist()
     t = random.sample(t, len(t))
     train_x = train_x[t]
@@ -119,7 +125,7 @@ def sample_balance(train_x, train_y):
     return train_x, train_y
 
 
-def construct_prediction_feature(customer_data, competitor_data, tag_dict, essential_tag_dict=False):
+def construct_prediction_feature(customer_data, competitor_data, tag_dict, essential_tag_dict):
     """
     构造预测数据特征, 维度为两个商品在所有相关维度上的相似度
     :param customer_data: DataFrame
@@ -134,15 +140,17 @@ def construct_prediction_feature(customer_data, competitor_data, tag_dict, essen
     for customer_item in tqdm(customer_data):
         # ItemID, TaggedItemAttr, DiscountPrice, CategoryID
         for competitor_item in competitor_data:
-            # 价格区间
+            # 价格区间筛选
             lower_bound, upper_bound = 0.8 * customer_item[2], 1.2 * customer_item[2]
             if float(competitor_item[2]) < lower_bound or float(competitor_item[2]) > upper_bound:
                 continue
-            # 时间区间
-
+            # 品类筛选 chunk 操作
+            if competitor_item[3] != customer_item[3]:
+                continue
             # 必要维度法
             attr1, attr2 = attributes_to_dict(competitor_item[1]), attributes_to_dict(customer_item[1])
-            # essential_dimension_trick(attr1=attr1, attr2=attr2, essential_tag_dict=essential_tag_dict)
+            if not essential_dimension_trick(attr1=attr1, attr2=attr2, essential_tag_dict=essential_tag_dict):
+                continue
             # 都没问题才纳入预测数据返回
             feature_vector = make_similarity_feature(attr1=attr1, attr2=attr2, tag_dict=tag_dict)
             x_set.append(feature_vector)
@@ -150,8 +158,19 @@ def construct_prediction_feature(customer_data, competitor_data, tag_dict, essen
     return np.asarray(x_set), item_pair
 
 
-def parse_essential_dict():
-    return
+def parse_essential_dimension(df):
+    od = OrderedDict()
+    for row in df.values.tolist():
+        if row[0] in od.keys():
+            if row[1] in od[row[0]].keys():
+                od[row[0]][row[1]].append(row[2])
+            else:
+                od[row[0]][row[1]] = [row[2]]
+        else:
+            dimension_value = OrderedDict()
+            dimension_value[row[1]] = [row[2]]
+            od[row[0]] = dimension_value
+    return od
 
 
 def essential_dimension_trick(attr1, attr2, essential_tag_dict):
@@ -164,22 +183,22 @@ def essential_dimension_trick(attr1, attr2, essential_tag_dict):
     :param essential_tag_dict: OrderedDict
     :return: boolean
     """
+    if not essential_tag_dict:
+        return True
     a1_a2_intersection = set(attr1.keys()) & set(attr2.keys())
     a1_tag_intersection = set(attr1.keys()) & set(essential_tag_dict.keys())
     a2_tag_intersection = set(attr2.keys()) & set(essential_tag_dict.keys())
     public_intersection = a1_tag_intersection & a2_tag_intersection
 
     # 1. 商品之间有维度相交
-    if not essential_tag_dict:
-        return True
     if a1_a2_intersection:
         # 1.1 都和必要维度无交集
         if not a1_tag_intersection and not a2_tag_intersection:
-            print u'商品之间有维度相交, 都必要维度无交集, 我不管'
+            debug(u'商品之间有维度相交, 都必要维度无交集, 我不管')
             return True
         # 1.2 只有一个商品有必要维度相交
         elif (a1_tag_intersection and not a2_tag_intersection) or (a2_tag_intersection and not a1_tag_intersection):
-            print u'商品之间有维度相交, 只有一个商品有必要维度相交, 异位'
+            debug(u'商品之间有维度相交, 只有一个商品有必要维度相交, 异位')
             return False
         # 两个商品都有必要维度
         else:
@@ -192,29 +211,29 @@ def essential_dimension_trick(attr1, attr2, essential_tag_dict):
                         continue
                     # 1.31 同维度下有不同的维度值
                     else:
-                        print u'商品之间有维度相交, 同维度下有不同的维度值, 异位'
+                        debug(u'商品之间有维度相交, 同维度下有不同的维度值, 异位')
                         return False
                 # 1.32 所有维度值相等
-                print u'商品之间有维度相交, 两个商品的所有维度值相等, 我不管'
+                debug(u'商品之间有维度相交, 两个商品的所有维度值相等, 我不管')
                 return True
                 # 1.32 判断每个属性下面是否所有值都相等
             # 1.4 两个商品的必要维度不等
             else:
-                print u'商品之间有维度相交, 两个商品的必要维度不等, 异位'
+                debug(u'商品之间有维度相交, 两个商品的必要维度不等, 异位')
                 return False
     # 2. 商品之间没有维度相交
     else:
         # 2.1 都没有必要维度
         if not a1_tag_intersection and not a2_tag_intersection:
-            print u'商品之间没有维度相交, 都没有必要维度, 我不管'
+            debug(u'商品之间没有维度相交, 都没有必要维度, 我不管')
             return True
         # 2.2 有一个有必要维度
         elif (a1_tag_intersection and not a2_tag_intersection) or (a2_tag_intersection and not a1_tag_intersection):
-            print u'商品之间没有维度相交, 有一个有必要维度, 异位'
+            debug(u'商品之间没有维度相交, 有一个有必要维度, 异位')
             return False
         # 2.3 都有必要维度
         else:
-            print u'商品之间没有维度相交, 都有必要维度, 异位'
+            debug(u'商品之间没有维度相交, 都有必要维度, 异位')
             return False
 
 
@@ -346,7 +365,7 @@ def tag_process(attr_name, attr_value):
     wrapper = zip(attr_name, attr_value)
     attr_list = []
     for row in wrapper:
-        for attr in row[1].split(u','):
+        for attr in row[1].split(u","):
             attr = u'{0}-{1}'.format(row[0], attr)
             attr_list.append(attr)
     tag_list = list(set(attr_list))
@@ -395,10 +414,10 @@ def parser_label(json_list, dict_head):
         # i 是L2，y是L3
         for i, y in d.iteritems():
             if isinstance(y, list):
-                t += [i+'-'+z for z in y]
+                t += [i+"-"+z for z in y]
             else:
-                t.append(i+'-'+y)
-        a_list.append(','.join(t))
+                t.append(i+"-"+y)
+        a_list.append(",".join(t))
 
     # size 数据行数 * 维度数量
     label = np.zeros((len(a_list), len(dict_head)))
@@ -407,13 +426,69 @@ def parser_label(json_list, dict_head):
     for i, t in enumerate(a_list):
         # for j in df.index:
             # t = t.replace(df['o'][j], df['t'][j])
-        for x in set(t.split(',')):
-            if x != '':
+        for x in set(t.split(",")):
+            if x != "":
                 label[i][dict_head[x]] = 1
     return label
 # endregion
 
-if __name__ == '__main__':
+
+def parse_raw_desc(attr_desc_list):
+    """
+    将爬虫获取的字符串数据转换成字典的格式
+    :param attr_desc_list:
+    :return:
+    """
+    error_list = []
+    processed_list = []
+    for row in tqdm(attr_desc_list):
+        row = row.split(u"，")
+        attr_dict = dict()
+        for col in row:
+            spl = col.split(u":")
+            try:
+                key = spl[0]
+                value = spl[1]
+            except IndexError:
+                error_list.append(u"index error")
+                continue
+            try:
+                if key in attr_dict.keys():
+                    attr_dict[key].append(value)
+                else:
+                    attr_dict[key] = [value]
+            except KeyError:
+                error_list.append(u"key error")
+                continue
+        processed_list.append(attr_dict)
+    return processed_list
+
+
+def tag_setter(processed_list):
+    """
+    把dict格式的标签转换成unicode类型
+    :param processed_list: list(dict)
+    :return: list(unicode)
+    """
+    for i in xrange(len(processed_list)):
+        new_format = u","
+        for dimension, value in processed_list[i].iteritems():
+            new_format += u"{0}:{1},".format(dimension, value)
+        if len(new_format) <= 2:
+            new_format = u""
+        processed_list[i] = new_format
+    return
+
+
+def tag_fuzzy_attr(documents, library):
+    return
+
+
+def tag_multiple_value(documents, library):
+    return
+
+
+if __name__ == "__main__":
     from datetime import datetime
     # region 废弃函数的unit test
     # test_string = u"{'att-图案': '花式', 'att-适用季节': '秋季', " \
@@ -449,7 +524,7 @@ if __name__ == '__main__':
     from mysql_helper import connect_db
     from enums import ATTR_META_QUERY
     import pandas as pd
-    industry = 'mp_women_clothing'
+    industry = "mp_women_clothing"
     attr_meta = pd.read_sql_query(ATTR_META_QUERY.format(industry), connect_db(industry))
     cut = tag_to_dict(attr_meta[["CID", "Attrname", "AttrValue"]])
     _cid = 50000671
@@ -468,6 +543,12 @@ if __name__ == '__main__':
         print k, v
 
     print u'{0}开始测试make_similarity_feature'.format(datetime.now())
-    _tag_dict = {'a': [u"我", u"你"], 'b': [u"你"], 'c': [u"他"], 'd': [u"啥"]}
+    _tag_dict = {"a": [u"我", u"你"], "b": [u"你"], "c": [u"他"], "d": [u"啥"]}
     fv = make_similarity_feature(_attr1, _attr2, _tag_dict)
     print fv
+
+    print u'{0}parse_essential_dimension'.format(datetime.now())
+    from db_apis import get_essential_dimensions
+    d = parse_essential_dimension(get_essential_dimensions(db="mp_women_clothing"))
+    print d.keys()
+
