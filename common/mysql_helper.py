@@ -1,7 +1,10 @@
 # coding: utf-8
+# __author__: "John"
 import MySQLdb
 from datetime import datetime
 from settings import host, user, pwd, db
+from os import path, sys
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 
 def connect_db(industry=u"mp_portal"):

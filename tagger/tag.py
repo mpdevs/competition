@@ -4,10 +4,10 @@
 打标签主程序
 将数据分成有商品描述和没有商品描述的两个类
 """
+from db_apis import *
+from helper import *
 from datetime import datetime
 from tqdm import tqdm
-from db_apis import get_items_data, set_tag, get_categories
-from helper import parse_raw_desc
 
 
 class TaggingAttrDesc(object):
@@ -23,7 +23,7 @@ class TaggingAttrDesc(object):
 
     def start_tag(self):
         print u"{0} 正在获取品类=<{1}>的商品描述数据...".format(datetime.now(), self.category_id)
-        self.items_data = get_items_data(db=self.db, table=self.table, category_id=self.category_id)
+        self.items_data = get_items_attr_data(db=self.db, table=self.table, category_id=self.category_id)
         print u"{0} 正在转换数据格式...".format(datetime.now())
         self.items_attr = parse_raw_desc(attr_desc_list=self.items_data[u"Attribute"].values)
         if len(self.items_data) == 0:

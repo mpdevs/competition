@@ -523,8 +523,8 @@ if __name__ == "__main__":
                   u",款式品名:卫衣/绒衫,服装款式细节:口袋,领型:半开领,服饰工艺:立体裁剪,颜色分类:紫色,颜色分类:黄色,颜色分类:酒红,颜色分类:红色,颜色分类:红黑,上市年份季节:2014年秋季,组合形式:两件套,厚薄:厚,厚薄:薄,厚薄:适中,袖长:长袖,裤长:长裤,面料:棉,面料:聚酯,衣门襟:拉链,适用年龄:35-39周岁,袖型:常规,服装版型:宽松,穿着方式:开衫,衣长:中长款,适用季节:春,适用季节:秋,"]
 
     print u'{0}开始测试tag_to_dict'.format(datetime.now())
-    from mysql_helper import connect_db
-    from enums import ATTR_META_QUERY
+    from common.mysql_helper import connect_db
+    from sql_constant import ATTR_META_QUERY
     import pandas as pd
     industry = "mp_women_clothing"
     attr_meta = pd.read_sql_query(ATTR_META_QUERY.format(industry), connect_db(industry))

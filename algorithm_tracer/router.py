@@ -12,4 +12,4 @@ handler = [
     (r"/demo/form", AlgorithmDemoFormHandler),
 ]
 
-template_path = os.path.join(os.path.dirname(__file__), "template")
+template_path = os.path.join(os.path.dirname(__file__), u"template")

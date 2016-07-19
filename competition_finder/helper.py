@@ -25,7 +25,7 @@ def tag_to_dict(df):
     for cid in cid_list:
         attr_name_value_dict = OrderedDict()
         for row in df[df.CID == cid].values.tolist():
-            attr_name_value_dict[row[1]] = row[2].split(',')
+            attr_name_value_dict[row[1]] = row[2].split(u",")
         tag_dict[cid] = attr_name_value_dict
     return tag_dict
 
@@ -73,8 +73,8 @@ def attributes_to_dict(attributes):
     :return: OrderedDict
     """
     od = OrderedDict()
-    for attribute in attributes[1: -1].split(','):
-        name_value_pair = attribute.split(':')
+    for attribute in attributes[1: -1].split(u","):
+        name_value_pair = attribute.split(u":")
         if name_value_pair[0] in od.keys():
             od[name_value_pair[0]].append(name_value_pair[1])
         else:
@@ -195,11 +195,11 @@ def essential_dimension_trick(attr1, attr2, essential_tag_dict):
     if a1_a2_intersection:
         # 1.1 都和必要维度无交集
         if not a1_tag_intersection and not a2_tag_intersection:
-            debug(u'商品之间有维度相交, 都必要维度无交集, 我不管')
+            debug(u"商品之间有维度相交, 都必要维度无交集, 我不管")
             return True
         # 1.2 只有一个商品有必要维度相交
         elif (a1_tag_intersection and not a2_tag_intersection) or (a2_tag_intersection and not a1_tag_intersection):
-            debug(u'商品之间有维度相交, 只有一个商品有必要维度相交, 异位')
+            debug(u"商品之间有维度相交, 只有一个商品有必要维度相交, 异位")
             return False
         # 两个商品都有必要维度
         else:
@@ -212,29 +212,29 @@ def essential_dimension_trick(attr1, attr2, essential_tag_dict):
                         continue
                     # 1.31 同维度下有不同的维度值
                     else:
-                        debug(u'商品之间有维度相交, 同维度下有不同的维度值, 异位')
+                        debug(u"商品之间有维度相交, 同维度下有不同的维度值, 异位")
                         return False
                 # 1.32 所有维度值相等
-                debug(u'商品之间有维度相交, 两个商品的所有维度值相等, 我不管')
+                debug(u"商品之间有维度相交, 两个商品的所有维度值相等, 我不管")
                 return True
                 # 1.32 判断每个属性下面是否所有值都相等
             # 1.4 两个商品的必要维度不等
             else:
-                debug(u'商品之间有维度相交, 两个商品的必要维度不等, 异位')
+                debug(u"商品之间有维度相交, 两个商品的必要维度不等, 异位")
                 return False
     # 2. 商品之间没有维度相交
     else:
         # 2.1 都没有必要维度
         if not a1_tag_intersection and not a2_tag_intersection:
-            debug(u'商品之间没有维度相交, 都没有必要维度, 我不管')
+            debug(u"商品之间没有维度相交, 都没有必要维度, 我不管")
             return True
         # 2.2 有一个有必要维度
         elif (a1_tag_intersection and not a2_tag_intersection) or (a2_tag_intersection and not a1_tag_intersection):
-            debug(u'商品之间没有维度相交, 有一个有必要维度, 异位')
+            debug(u"商品之间没有维度相交, 有一个有必要维度, 异位")
             return False
         # 2.3 都有必要维度
         else:
-            debug(u'商品之间没有维度相交, 都有必要维度, 异位')
+            debug(u"商品之间没有维度相交, 都有必要维度, 异位")
             return False
 
 
@@ -243,17 +243,17 @@ if __name__ == "__main__":
     _attr_list = [u",风格:通勤,款式品名:小背心/小吊带,图案:纯色,领型:圆领,颜色分类:花色,颜色分类:黑色,颜色分类:白色,颜色分类:深灰,颜色分类:浅灰,颜色分类:灰色,颜色分类:黄色,颜色分类:蓝色,颜色分类:绿色,颜色分类:西瓜红,颜色分类:玫红,颜色分类:红色,上市年份季节:2015年秋季,组合形式:单件,厚薄:厚,厚薄:薄,厚薄:适中,通勤:韩版,穿着方式:套头,衣长:常规,适用季节:春,适用季节:夏,适用季节:秋,适用季节:春夏,",
                   u",款式品名:卫衣/绒衫,服装款式细节:口袋,领型:半开领,服饰工艺:立体裁剪,颜色分类:紫色,颜色分类:黄色,颜色分类:酒红,颜色分类:红色,颜色分类:红黑,上市年份季节:2014年秋季,组合形式:两件套,厚薄:厚,厚薄:薄,厚薄:适中,袖长:长袖,裤长:长裤,面料:棉,面料:聚酯,衣门襟:拉链,适用年龄:35-39周岁,袖型:常规,服装版型:宽松,穿着方式:开衫,衣长:中长款,适用季节:春,适用季节:秋,"]
 
-    print u'{0}开始测试tag_to_dict'.format(datetime.now())
+    print u"{0}开始测试tag_to_dict".format(datetime.now())
     from common.mysql_helper import connect_db
     from sql_constant import ATTR_META_QUERY
     import pandas as pd
-    industry = "mp_women_clothing"
+    industry = u"mp_women_clothing"
     attr_meta = pd.read_sql_query(ATTR_META_QUERY.format(industry), connect_db(industry))
-    cut = tag_to_dict(attr_meta[["CID", "Attrname", "AttrValue"]])
+    cut = tag_to_dict(attr_meta[[u"CID", u"Attrname", u"AttrValue"]])
     _cid = 50000671
-    _attr_name = u'颜色分类'
+    _attr_name = u"颜色分类"
 
-    print u'{0}开始测试attributes_to_dict'.format(datetime.now())
+    print u"{0}开始测试attributes_to_dict".format(datetime.now())
     a1 = u",a:我,a:你,b:你,"
     a2 = u",c:他,a:我,"
     _attr1 = attributes_to_dict(a1)
@@ -265,13 +265,13 @@ if __name__ == "__main__":
     for k, v in _attr2.iteritems():
         print k, v
 
-    print u'{0}开始测试make_similarity_feature'.format(datetime.now())
-    _tag_dict = {"a": [u"我", u"你"], "b": [u"你"], "c": [u"他"], "d": [u"啥"]}
+    print u"{0}开始测试make_similarity_feature".format(datetime.now())
+    _tag_dict = {u"a": [u"我", u"你"], u"b": [u"你"], u"c": [u"他"], u"d": [u"啥"]}
     fv = make_similarity_feature(_attr1, _attr2, _tag_dict)
     print fv
 
-    print u'{0}parse_essential_dimension'.format(datetime.now())
+    print u"{0}parse_essential_dimension".format(datetime.now())
     from db_apis import get_essential_dimensions
-    d = parse_essential_dimension(get_essential_dimensions(db="mp_women_clothing"))
+    d = parse_essential_dimension(get_essential_dimensions(db=u"mp_women_clothing"))
     print d.keys()
 

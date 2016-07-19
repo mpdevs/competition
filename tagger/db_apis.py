@@ -1,15 +1,12 @@
 # coding: utf-8
 # __author__ = "John"
+from sql_constant import *
 import os
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from math import ceil
 from datetime import datetime
-from sql_constant import CATEGORY_QUERY, ATTR_META_QUERY, ATTRIBUTES_QUERY, TRAINING_DATA_QUERY, MAX_DATE_RANGE_QUERY
-from sql_constant import CUSTOMER_ITEM_QUERY, COMPETITIVE_ITEM_QUERY, SET_SCORES_QUERY, DELETE_SCORES_QUERY
-from sql_constant import ESSENTIAL_DIMENSIONS_QUERY, ITEMS_DATA_QUERY, PREDICT_PAIR_INFO_QUERY, TRAIN_PAIR_INFO_QUERY
-from sql_constant import GET_CATEGORY_ID_QUERY
 from os import path, sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.mysql_helper import connect_db, MySQLDBPackage
@@ -107,9 +104,9 @@ def get_essential_dimensions(db="mp_women_clothing"):
     return pd.read_sql_query(ESSENTIAL_DIMENSIONS_QUERY.format(threshold, confidence), connect_db(db))
 
 
-def get_items_data(db, table, category_id=None):
+def get_items_attr_data(db, table, category_id=None):
     """
-    先把旧标签替换成新标签，这一步以后要改SQL
+    获取某行业某个表某个品类下面所有的商品的属性
     :param db:
     :param table:
     :param category_id:
@@ -119,7 +116,7 @@ def get_items_data(db, table, category_id=None):
         category_filter = u" AND CategoryID = {0}".format(category_id)
     else:
         category_filter = u""
-    return pd.read_sql_query(ITEMS_DATA_QUERY.format(table, category_filter), connect_db(db))
+    return pd.read_sql_query(ITEMS_ATTR_DESC_QUERY.format(table, category_filter), connect_db(db))
 
 
 def set_tag(db, table, args):
@@ -133,89 +130,29 @@ def set_tag(db, table, args):
         db_connection.execute_many(sql=SET_SCORES_QUERY.format(db, table), args=data)
 
 
-def get_competitive_item_pair_info(item1_id, item2_id, db="mp_women_clothing", source_table="itemmonthlysales2015",
-                                   date_range="2015-12-01"):
+def get_competitive_item_pair_info(item1_id, item2_id, db=u"mp_women_clothing", source_table=u"itemmonthlysales2015",
+                                   date_range=u"2015-12-01"):
     return pd.read_sql_query(PREDICT_PAIR_INFO_QUERY.format(
         source_table, item1_id, item2_id, date_range), connect_db(db))
 
 
-def get_train_item_pair_info(item1_id, item2_id, db="mp_women_clothing"):
+def get_train_item_pair_info(item1_id, item2_id, db=u"mp_women_clothing"):
     return pd.read_sql_query(TRAIN_PAIR_INFO_QUERY.format(item1_id, item2_id), connect_db(db))
 
 
-def get_category_id(table, item_id, db="mp_women_clothing"):
+def get_category_id(table, item_id, db=u"mp_women_clothing"):
     return pd.read_sql_query(GET_CATEGORY_ID_QUERY.format(table, item_id), connect_db(db))
 
-if __name__ == "__main__":
-    _industry = "mp_women_clothing"
-    _source_table = "itemmonthlysales2015"
-    _target_table = "itemmonthlyrelation_2015"
+if __name__ == u"__main__":
+    _industry = u"mp_women_clothing"
+    _source_table = u"itemmonthlysales2015"
+    _target_table = u"itemmonthlyrelation_2015"
     _shop_id = 66098091
-    _date_range = "2015-12-01"
+    _date_range = u"2015-12-01"
     _category_id = 1623
     print u"{0} start testing get_categorys".format(datetime.now())
     r = get_categories()
     print u"get_categorys row count={0}".format(len(r))
+    print u"{0} start testing get_categorys".format(datetime.now())
+    r = get_items_attr_data(db=u"mp_women_clothing")
 
-    print u"{0} start testing get_attribute_meta".format(datetime.now())
-    r = get_attribute_meta()
-    print u"get_attribute_meta row count={0}".format(r.values.shape[0])
-
-    print u"{0} start testing get_item_attributes".format(datetime.now())
-    print u"get_item_attributes row count={0}".format(r.values.shape[0])
-
-    print u"{0} start testing get_training_data".format(datetime.now())
-    r = get_training_data(1623)
-    print u"get_training_data row count={0}".format(r.values.shape[0])
-
-    print u"{0} start testing get_customer_shop_items".format(datetime.now())
-    r = get_customer_shop_items(db=_industry, table=_source_table, shop_id=66098091, date_range=_date_range,
-                                category_id=_category_id)
-    print u"get_customer_shop_items row count={0}".format(r.values.shape[0])
-
-    print u"{0} start testing get_competitor_shop_items".format(datetime.now())
-    r = get_competitor_shop_items(db=_industry, table=_source_table, shop_id=_shop_id, category_id=1623,
-                                  date_range=_date_range)
-    print u"get_competitor_shop_items row count={0}".format(r.values.shape[0])
-
-    # print u"{0} start testing set_scores".format(datetime.now())
-    # batch_data = [(1, 1, 1, 0, datetime.now().strftime("%Y-%m-%d")),
-    #               (0, 0, 0, 1, datetime.now().strftime("%Y-%m-%d"))]
-    # set_scores(db="mp_women_clothing", table="itemmonthlyrelation_2016", args=batch_data)
-
-    print u"{0} start testing get_max_date_range".format(datetime.now())
-    dr = get_max_date_range(db=_industry, table=_source_table)
-    print "date_range={0}".format(dr)
-
-    print u"{0} start testing get_essential_dimensions".format(datetime.now())
-    r = get_essential_dimensions(db=_industry)
-    print u"get_essential_dimensions row count={0}".format(r.values.shape[0])
-
-    print u"{0} start testing get_items_data".format(datetime.now())
-    r = get_items_data(db=_industry, table="item_dev")
-    print u"get_items_data row count={0}".format(r.values.shape[0])
-
-    print u"{0} start testing get_competitive_item_pair_info".format(datetime.now())
-    r = get_competitive_item_pair_info(db=_industry, item1_id=528056085087, item2_id=528558659600,
-                                       date_range=_date_range, source_table=_source_table)
-    print u"get_competitive_item_pair_info row count={0}".format(r.values.shape[0])
-    r = r[u"TaggedItemAttr"].values
-    if r:
-        print 'got data'
-        print u"shape is {}".format(r.shape)
-        print u"type[0] is {}".format(type(r[0]))
-        print u"[0] value is {}".format(r[0])
-    else:
-        print 'no data'
-
-    print u"{0} start testing get_train_item_pair_info".format(datetime.now())
-    r = get_train_item_pair_info(item1_id=528056085087, item2_id=528558659600)
-    print u"get_train_item_pair_info row count={0}".format(r.values.shape[0])
-
-    print u"{0} start testing get_category_id".format(datetime.now())
-    r = get_category_id(table=_source_table, db=_industry, item_id=525723538258)
-    try:
-        print u"category_id = {0}".format(r.values[0][0])
-        print u"get_category_id row count={0}".format(r.values.shape[0])
-    except IndexError:
-        print u"no data"

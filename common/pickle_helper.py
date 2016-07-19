@@ -1,9 +1,5 @@
 # coding: utf-8
-"""
-Created on Mar 22, 2016
-
-@author: John Pan
-"""
+# __author__: "John"
 import pickle
 
 
@@ -36,15 +32,15 @@ def pickle_load(file_name):
 # 单元测试case
 if __name__ == '__main__':
     # 当前文件夹操作
-    dump_object = 'test'
-    dump_file = 'test'
-    pickle_dump(dump_file, dump_object)
-    read_file = pickle_load(dump_file)
+    _dump_object = 'test'
+    _dump_file = 'test'
+    pickle_dump(_dump_file, _dump_object)
+    read_file = pickle_load(_dump_file)
     print read_file
-    dump_object = 'test2'
-    dump_file = 'test2.pickle'
-    pickle_dump(dump_file, dump_object)
-    read_file = pickle_load(dump_file)
+    _dump_object = 'test2'
+    _dump_file = 'test2.pickle'
+    pickle_dump(_dump_file, _dump_object)
+    read_file = pickle_load(_dump_file)
     print read_file
     # 跨文件夹操作
     # import sys

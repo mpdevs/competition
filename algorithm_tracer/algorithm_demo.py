@@ -80,7 +80,7 @@ class VerifyResult(CalC):
             self.predict()
             self.show_process_and_result()
 
-if __name__ == "__main__":
+if __name__ == u"__main__":
     vr = VerifyResult(source_table=u"itemmonthlysales2015", target_table=u"itemmonthlyrelation_2015",
                       date_range=u"2015-12-01")
     vr.main(item1_id=527684776697, item2_id=531834073847, category_id=121412004)
