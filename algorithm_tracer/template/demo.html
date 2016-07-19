@@ -1,0 +1,19 @@
+{% extends "demo_base.html" %}
+<body>
+    {% block body %}
+    <h4>SourceItem:{{ si[0] }}</h4>
+    <h5>Attr: {{ si[1] }}</h5>
+    <h4>TargetItem:{{ ti[0] }}</h4>
+    <h5>Attr: {{ ti[1] }}</h5>
+    <h4>Feature Vector:</h4>
+    <h5>{{ fv }}</h5>
+    <h4>Score:</h4>
+    <h5>{{ y }}</h5>
+    <ul>
+    {% for i in xrange(len(li)) %}
+        <li>{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+    {% end %}
+    </ul>
+    <input type="button" name="Submit" value="返回" onclick="javascript:history.back(1)" >
+    {% end %}
+</body>
