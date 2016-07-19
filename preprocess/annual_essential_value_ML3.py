@@ -12,7 +12,7 @@ import pandas as pd
 import numpy as np
 from math import ceil
 from enums import DICT_FL, Insert_sql, Select_sql
-from helper import parser_label, Jaca, getcut, string_or_unicode_to_list, db_json_to_python_json, debug
+from helper import parser_label, jaccard, get_cut, string_or_unicode_to_list, db_json_to_python_json
 from mp_preprocess.settings import host, user, pwd
 from mysql_conn import MySQLDB
 
@@ -86,7 +86,7 @@ def process_annual(industry, table_from, table_to, one_shop=None, setprecetage=0
     else:
         train_false = None
 
-    cut = getcut([fl], head)[0]
+    cut = get_cut([fl], head)[0]
     # 模型会按照类目进行区分，一个类目就会有一个
     name2model = dict()
 
@@ -110,7 +110,7 @@ def process_annual(industry, table_from, table_to, one_shop=None, setprecetage=0
                 v1, v2 = id2vec[long(row[0])], id2vec[long(row[1])]
             except:
                 continue
-            X.append([Jaca(v1[c], v2[c]) for c in cut])
+            X.append([jaccard(v1[c], v2[c]) for c in cut])
             y.append(float(row[2]))
         X, y = np.asarray(X), np.asarray(y)
 
@@ -129,7 +129,7 @@ def process_annual(industry, table_from, table_to, one_shop=None, setprecetage=0
                             v1_false, v2_false = id2vec[long(row_false[0])], id2vec[long(row_false[1])]
                         except:
                             continue
-                        X_false.append([Jaca(v1_false[c], v2_false[c]) for c in cut])
+                        X_false.append([jaccard(v1_false[c], v2_false[c]) for c in cut])
                         y_false.append(float(row_false[2]))
                     X_false, y_false = np.asarray(X_false), np.asarray(y_false)
                     mixed_set = True
@@ -247,7 +247,7 @@ def process_annual(industry, table_from, table_to, one_shop=None, setprecetage=0
             # 计算相似度
             v1 = item_label[i]
             todo_id = todo_data['itemid'].values
-            X = [[Jaca(v1[c], v2[c]) for c in cut] for v2 in parser_label(todo_data['label'].values, dict_head)]
+            X = [[jaccard(v1[c], v2[c]) for c in cut] for v2 in parser_label(todo_data['label'].values, dict_head)]
             y = name2model[cid2name[category_id]].predict(X)
             print '{} X的数量为{} all_data数量为{} Y的数量为{}'.format(
                 datetime.now(), np.shape(X)[0], len(all_data),np.shape(y))
@@ -321,7 +321,7 @@ def get_essential_dict(file_name= u'essentialvalue.csv'):
             else:
                 essential_dict[level1][level2] = level3.split('\t')
         else:
-            essential_dict[level1] = {level2 : level3.split('\t')}
+            essential_dict[level1] = {level2: level3.split('\t')}
     f.close()
     return essential_dict
 

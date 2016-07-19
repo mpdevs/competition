@@ -188,10 +188,10 @@ def tagging_items(data, tag_preparation, exclusive_list):
         # use_dict (Attrname, DisplayName, Flag): AttrValue
         for name, AttrValue in use_dict.iteritems():
             # 这里不打材质成分的标签
-            if name[1] == u'材质成分':
-                continue
-            else:
-                pass
+            # if name[1] == u'材质成分':
+            #     continue
+            # else:
+            #     pass
             # 阿里和宏原的属性名都不一样
             # 'A' 是阿里
             # name[2] Flag 标注是阿里还是宏原
