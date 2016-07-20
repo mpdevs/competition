@@ -12,7 +12,13 @@
     <h5>{{ y }}</h5>
     <ul>
     {% for i in xrange(len(li)) %}
-        <li>{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+        {% if fv[i] < 0 %}
+            <li>{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+        {% elif fv[i] > 0 %}
+            <li style="color:red">{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+        {% elif fv[i] == 0 %}
+            <li style="color:blue">{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+        {% end if %}
     {% end %}
     </ul>
     <input type="button" name="Submit" value="返回" onclick="javascript:history.back(1)" >
