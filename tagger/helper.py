@@ -439,46 +439,58 @@ def parse_raw_desc(attr_desc_list):
     """
     将爬虫获取的字符串数据转换成字典的格式
     :param attr_desc_list:
-    :return:
+    :return: items_attr: list, error_info: list, error_items: list
     """
-    error_list = []
-    processed_list = []
-    for row in tqdm(attr_desc_list):
-        row = row.split(u"，")
+    error_info = []
+    error_items = []
+    items_attr = []
+    for item in tqdm(attr_desc_list):
+        # 结尾中文逗号去除
+        try:
+            if item[1][-1] == u"，":
+                item[1] = item[1][0:-1]
+            else:
+                pass
+        except IndexError:
+            error_info.append(unicode(e))
+            error_items.append(item[0])
+        attr_desc = item[1].split(u"，")
         attr_dict = dict()
-        for col in row:
-            spl = col.split(u":")
+        for dimension_value in attr_desc:
+            key_pair = dimension_value.split(u":")
             try:
-                key = spl[0]
-                value = spl[1]
-            except IndexError:
-                error_list.append(u"index error")
+                key = key_pair[0]
+                value = key_pair[1]
+            except IndexError as e:
+                error_info.append(unicode(e))
+                error_items.append(item[0])
                 continue
             try:
                 if key in attr_dict.keys():
                     attr_dict[key].append(value)
                 else:
                     attr_dict[key] = [value]
-            except KeyError:
-                error_list.append(u"key error")
+            except KeyError as e:
+                error_info.append(unicode(e))
+                error_items.append(item[0])
                 continue
-        processed_list.append(attr_dict)
-    return processed_list
+        items_attr.append(attr_dict)
+    return items_attr, error_items, error_info
 
 
-def tag_setter(processed_list):
+def tag_setter(items_attr):
     """
     把dict格式的标签转换成unicode类型
-    :param processed_list: list(dict)
+    :param items_attr: list(dict)
     :return: list(unicode)
     """
-    for i in xrange(len(processed_list)):
+    for i in xrange(len(items_attr)):
         new_format = u","
-        for dimension, value in processed_list[i].iteritems():
+        for dimension, value in items_attr[i].iteritems():
             new_format += u"{0}:{1},".format(dimension, value)
         if len(new_format) <= 2:
             new_format = u""
-        processed_list[i] = new_format
+        items_attr[i] = new_format
     return
 
 

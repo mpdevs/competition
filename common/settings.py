@@ -10,4 +10,3 @@ host = u"192.168.1.120"
 user = u"dev"
 pwd = u"Dev_123123"
 db = u"mp_portal"
-

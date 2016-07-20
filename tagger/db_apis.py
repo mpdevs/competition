@@ -10,6 +10,7 @@ from datetime import datetime
 from os import path, sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.mysql_helper import connect_db, MySQLDBPackage
+from common.debug_helper import debug
 
 
 def get_categories(db="mp_women_clothing", category_id_list=[1623, 121412004, 162104, 50007068, 50011277]):
@@ -104,7 +105,7 @@ def get_essential_dimensions(db="mp_women_clothing"):
     return pd.read_sql_query(ESSENTIAL_DIMENSIONS_QUERY.format(threshold, confidence), connect_db(db))
 
 
-def get_items_attr_data(db, table, category_id=None):
+def get_items_attr_data(db, table, category_id=1623):
     """
     获取某行业某个表某个品类下面所有的商品的属性
     :param db:
@@ -112,11 +113,8 @@ def get_items_attr_data(db, table, category_id=None):
     :param category_id:
     :return:
     """
-    if category_id:
-        category_filter = u" AND CategoryID = {0}".format(category_id)
-    else:
-        category_filter = u""
-    return pd.read_sql_query(ITEMS_ATTR_DESC_QUERY.format(table, category_filter), connect_db(db))
+    debug(ITEMS_ATTR_DESC_QUERY.format(table, category_id))
+    return pd.read_sql_query(ITEMS_ATTR_DESC_QUERY.format(table, category_id), connect_db(db))
 
 
 def set_tag(db, table, args):
@@ -154,5 +152,5 @@ if __name__ == u"__main__":
     r = get_categories()
     print u"get_categorys row count={0}".format(len(r))
     print u"{0} start testing get_categorys".format(datetime.now())
-    r = get_items_attr_data(db=u"mp_women_clothing")
-
+    r = get_items_attr_data(db=u"mp_women_clothing", category_id=_category_id, table=_source_table)
+    print u"get_categorys row count={0}".format(len(r))

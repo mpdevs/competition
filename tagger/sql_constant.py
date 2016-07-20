@@ -27,7 +27,7 @@ WHERE MoreThanTwoNegPercent >= {0} AND ConfidenceLevel >= {1};"""
 
 ITEMS_ATTR_DESC_QUERY = u"""SELECT ItemID, CategoryID, concat_ws(' ',ItemSubTitle,ItemName) AS Title,
 ItemAttrDesc AS Attribute, concat_ws(' ',ShopName,ItemSubTitle,ItemName) AS ShopNameTitle
-FROM {0} WHERE TaggedItemAttr NOT LIKE ',%' {1};"""
+FROM {0} WHERE CategoryID = {1};"""
 
 CUSTOMER_ITEM_QUERY = u"""SELECT ItemID, TaggedItemAttr, DiscountPrice, CategoryID, DateRange
 FROM {0} WHERE ShopID = {1} AND CategoryID = {2} AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""

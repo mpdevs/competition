@@ -47,6 +47,50 @@ def make_similarity_feature(attr1, attr2, tag_dict):
     return feature
 
 
+def make_similarity_feature_demo(attr1, attr2, tag_dict):
+    """
+    和 make_similarity_feature 类似的方法
+    只是0代表两个商品都具有该属性，但是没有相交值
+    -1 代表一个商品具有该属性
+    -2 代表两个商品都没有该属性
+    :param attr1: dict(key=unicode, value=list)
+    :param attr2: dict(key=unicode, value=list)
+    :param tag_dict: OrderedDict(key=unicode, value=list)
+    :return: list
+    """
+    feature = []
+    for dimension, value_list in tag_dict.iteritems():
+        similarity = 0
+        try:
+            set(value_list)
+        except TypeError as e:
+            print u"tag_dict element type error, error_message={0}".format(str(e))
+            return
+        try:
+            set1 = set(value_list) & set(attr1[dimension])
+            if len(set1) == 0:
+                similarity -= -1
+        except KeyError:
+            similarity -= 1
+        try:
+            set2 = set(value_list) & set(attr2[dimension])
+            if len(set2) == 0:
+                similarity -= -1
+        except KeyError:
+            similarity -= 1
+        if similarity < 0:
+            feature.append(similarity)
+            continue
+        try:
+            similarity = float(len(set1 & set2)) / float(len(set1 | set2))
+            feature.append(similarity)
+        except ZeroDivisionError:
+            similarity = 0
+            feature.append(similarity)
+            continue
+    return feature
+
+
 def attributes_to_dict(attributes):
     """
     attributes是数据库里商品已经打好的标签

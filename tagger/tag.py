@@ -19,13 +19,17 @@ class TaggingAttrDesc(object):
         self.items_data = None
         self.brand_list = None
         self.items_attr = None
+        self.error_info = None
+        self.error_items = None
         return
 
-    def start_tag(self):
+    def start_tag(self, category_id):
+        self.category_id = category_id
         print u"{0} 正在获取品类=<{1}>的商品描述数据...".format(datetime.now(), self.category_id)
         self.items_data = get_items_attr_data(db=self.db, table=self.table, category_id=self.category_id)
         print u"{0} 正在转换数据格式...".format(datetime.now())
-        self.items_attr = parse_raw_desc(attr_desc_list=self.items_data[u"Attribute"].values)
+        self.items_attr, self.error_items, self.error_info = parse_raw_desc(
+            attr_desc_list=self.items_data[[u"ItemID", u"Attribute"]].values)
         if len(self.items_data) == 0:
             print u"{0} 没有数据需要打标签...".format(datetime.now())
             return
@@ -49,7 +53,7 @@ class TaggingAttrDesc(object):
                 brand = row[u"品牌"]
                 self.brand_list.append(brand)
             except KeyError:
-                self.brand_list.append("")
+                self.brand_list.append(u"")
         return
 
     def items_data_chunk(self):
@@ -84,12 +88,8 @@ class TaggingNoneAttrDesc(object):
     def start_tag(self):
         return
 
-if __name__ == "__main__":
-    tad = TaggingAttrDesc(db="mp_women_clothing", table="item_dev")
-    success, error = tad.items_data_chunk()
-    import pandas as pd
-    df = pd.DataFrame(success)[u"品牌"].values.tolist()
-    for i in df:
-        print i
-    print len(df)
+if __name__ == u"__main__":
+    tad = TaggingAttrDesc(db=u"mp_women_clothing", table=u"item_dev")
+    # success, error = tad.items_data_chunk()
+    tad.start_tag(category_id=1623)
 
