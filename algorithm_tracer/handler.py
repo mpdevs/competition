@@ -49,6 +49,9 @@ class AlgorithmDemoHandler(BaseHandler):
         item_pair = vr.competitive_item_pair_data.values
         source_item = item_pair[0]
         target_item = item_pair[1]
-        dimension_list = vr.tag_dict[vr.category_id].keys()
-        self.render(
-            "demo.html", si=source_item, ti=target_item, fv=vr.feature_vector, y=vr.predict_y, li=dimension_list)
+        if vr.essential_dimension_conflict:
+            self.reder(u"demo_error.html", si=source_item, ti=target_item)
+        else:
+            dimension_list = vr.tag_dict[vr.category_id].keys()
+            self.render(u"demo.html", si=source_item, ti=target_item, fv=vr.feature_vector, y=vr.predict_y,
+                        li=dimension_list)

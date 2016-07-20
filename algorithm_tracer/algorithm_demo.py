@@ -30,8 +30,10 @@ class VerifyResult(CalC):
         self.competitive_item_pair_data = get_competitive_item_pair_info(
             db=self.industry, source_table=self.source_table, item1_id=item1_id, item2_id=item2_id, 
             date_range=u"2015-12-01")
-        if self.competitive_item_pair_data.values:
+        # 如果竞品对能在source_table找到，则就用该表的信息
+        if len(self.competitive_item_pair_data.values) >= 2:
             self.category_id = self.competitive_item_pair_data[u"CategoryID"].values[0]
+        # 否则去训练数据的表获取
         else:
             self.category_id = category_id
             self.competitive_item_pair_data = get_train_item_pair_info(item1_id=item1_id, item2_id=item2_id)
@@ -42,19 +44,24 @@ class VerifyResult(CalC):
         attr = self.competitive_item_pair_data[u"TaggedItemAttr"].values
         try:
             attr1, attr2 = attributes_to_dict(attr[0]), attributes_to_dict(attr[1])
-            if essential_dimension_trick(
-                    attr1=attr1, attr2=attr2, essential_tag_dict=self.essential_tag_dict[self.category_id]):
-                debug(u"必要维度没有冲突")
+            try:
+                essential_tag_dict = self.essential_tag_dict[self.category_id]
+                # 有必要维度字典，并且没有违反必要维度法
+                if essential_dimension_trick(attr1=attr1, attr2=attr2, essential_tag_dict=essential_tag_dict):
+                    debug(u"必要维度没有冲突")
+                    self.feature_vector = make_similarity_feature_demo(attr1, attr2, self.tag_dict[self.category_id])
+                    return True
+                else:
+                    debug(u"和必要维度冲突")
+                    self.essential_dimension_conflict = True
+                    return False
+            except KeyError:
                 self.feature_vector = make_similarity_feature_demo(attr1, attr2, self.tag_dict[self.category_id])
                 return True
-            else:
-                debug(u"和必要维度冲突")
-                self.essential_dimension_conflict = True
-                return False
             # self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
             # return True
         except Exception as e:
-            print str(e)
+            print u"raise exception:{0}".format(e)
             return False
 
     def predict(self):
