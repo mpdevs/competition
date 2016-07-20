@@ -25,12 +25,18 @@
             </ul>
         </div>
         <div style="width:300px; height:auto; float:left; display:inline">
-            <p>SourceItem
-                <img id="p1" src={{ ti[2] }} height="200" width="200"/>
-            </p>
-            <p>TargetItem
-                <img id="p2" src={{ ti[2] }}height="200" width="200"/>
-            </p>
+            <p>SourceItem</p>
+                {% if len(si[2]) < 2 %}
+                    <p href="https://item.taobao.com/item.htm?id="+si[0]>SourceItemUrl</p>
+                {% elif len(si[2]) > 2 %}
+                    <img id="p1" src={{ si[2] }} height="200" width="200"/>
+                {% end if %}
+            <p>TargetItem</p>
+                {% if len(ti[2]) < 2 %}
+                    <p href="https://item.taobao.com/item.htm?id="+ti[0]>TargetItemUrl</p>
+                {% elif len(ti[2]) > 2 %}
+                    <img id="p2" src={{ ti[2] }} height="200" width="200"/>
+                {% end if %}
         </div>
     </div>
     <div style="width:300px; height:auto; float:left; display:clear">
