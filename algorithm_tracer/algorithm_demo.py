@@ -21,6 +21,7 @@ class VerifyResult(CalC):
         self.competitive_item_pair_data = None
         self.date_range = date_range
         self.feature_vector = None
+        self.feature_vector_demo = None
         self.pair_type = u"predict"
         self.category_id = None
         self.predict_y = None
@@ -49,14 +50,17 @@ class VerifyResult(CalC):
                 # 有必要维度字典，并且没有违反必要维度法
                 if essential_dimension_trick(attr1=attr1, attr2=attr2, essential_tag_dict=essential_tag_dict):
                     debug(u"必要维度没有冲突")
-                    self.feature_vector = make_similarity_feature_demo(attr1, attr2, self.tag_dict[self.category_id])
+                    self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
+                    self.feature_vector_demo = make_similarity_feature_demo(
+                        attr1, attr2, self.tag_dict[self.category_id])
                     return True
                 else:
                     debug(u"和必要维度冲突")
                     self.essential_dimension_conflict = True
                     return False
             except KeyError:
-                self.feature_vector = make_similarity_feature_demo(attr1, attr2, self.tag_dict[self.category_id])
+                self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
+                self.feature_vector_demo = make_similarity_feature_demo(attr1, attr2, self.tag_dict[self.category_id])
                 return True
             # self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
             # return True
@@ -65,6 +69,8 @@ class VerifyResult(CalC):
             return False
 
     def predict(self):
+        # for i in self.model[self.category_dict[self.category_id]].feature_importances_:
+        #     print i
         self.predict_y = self.model[self.category_dict[self.category_id]].predict(np.asarray(self.feature_vector))
 
     def show_process_and_result(self):
