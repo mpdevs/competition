@@ -11,7 +11,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from os import path, sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.pickle_helper import pickle_dump
-from common.settings import train_model_pickle
+from common.settings import *
 
 
 class CalculateCompetitiveItems(object):
@@ -39,6 +39,9 @@ class CalculateCompetitiveItems(object):
         self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"Attrname", u"AttrValue"]])
         self.training_data = None
         self.train_x = None
+        self.train_x_positive = dict()
+        self.train_x_negative = dict()
+        self.test_x = dict()
         self.train_y = None
         # key=category value=model
         self.model = OrderedDict()
@@ -87,6 +90,13 @@ class CalculateCompetitiveItems(object):
         print (u"{0} 正在构造训练数据的特征矩阵... ".format(datetime.now()))
         self.train_x, self.train_y = construct_train_feature(raw_data=self.training_data.values.tolist(),
                                                              tag_dict=self.tag_dict[self.category_id])
+        # region 用于echarts展示
+        df_x = pd.DataFrame(self.train_x)
+        df_y = pd.DataFrame(self.train_y, columns=[u"y"])
+        df = pd.concat([df_x, df_y], axis=1, join_axes=[df_x.index])
+        self.train_x_positive[self.category_id] = df[df.y > 0.5].values
+        self.train_x_negative[self.category_id] = df[df.y <= 0.5].values
+        # endregion
         self.train_x, self.train_y = sample_balance(train_x=self.train_x, train_y=self.train_y)
         return
 
@@ -129,6 +139,10 @@ class CalculateCompetitiveItems(object):
         print u"{0} predict_x 行数为{1}".format(datetime.now(), self.predict_x.shape[0])
         if self.predict_x.shape[0] > 0:
             self.predict_y = self.model[self.category_dict[self.category_id]].predict(self.predict_x)
+            df_x = pd.DataFrame(self.predict_x)
+            df_y = pd.DataFrame(self.predict_y, columns=[u"y"])
+            df = pd.concat([df_x, df_y], axis=1, join_axes=[df_x.index])
+            self.test_x[self.category_id] = df.values
         # 对客户的每个店铺进行搜索，计算同表内不同商店的商品的竞品相似度
         return
     # endregion
@@ -178,12 +192,15 @@ class CalculateCompetitiveItems(object):
             self.train()
             self.predict()
             self.set_data()
-        """
-        每次训练的时候模型都会不同，所以输出的结果和模型需要有一个统一的配对，y值存数据库，模型存pickle
-        """
-        pickle_dump(train_model_pickle, self.model)
+        # region pickle用于运算检验一致性
+        pickle_dump(TRAIN_MODEL_PICKLE, self.model)
+        pickle_dump(TRAIN_X_POSITIVE_PICKLE, self.train_x_positive)
+        pickle_dump(TRAIN_X_NEGATIVE_PICKLE, self.train_x_negative)
+        pickle_dump(TEST_X_PICKLE, self.test_x)
+        pickle_dump(TAG_DICT_PICKLE, self.tag_dict)
         # import pandas as pd
         # return pd.DataFrame(self.statistic_info)["rows"].sum()
+        # endregion
         return
     # endregion
 

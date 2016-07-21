@@ -2,28 +2,28 @@
 # __author__: "John"
 import MySQLdb
 from datetime import datetime
-from settings import host, user, pwd, db
+from settings import HOST, USER, PASSWD, DB
 from os import path, sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 
-def connect_db(industry=u"mp_portal"):
-    connection = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset=u"utf8")
+def connect_db(db=u"mp_portal"):
+    connection = MySQLdb.Connect(host=HOST, user=USER, passwd=PASSWD, db=db, charset=u"utf8")
     return connection
 
 
-def db_cursor(industry=u"mp_portal"):
-    cursor = MySQLdb.Connect(host=host, user=user, passwd=pwd, db=industry, charset=u"utf8").cursor()
+def db_cursor(db=u"mp_portal"):
+    cursor = MySQLdb.Connect(host=HOST, user=USER, passwd=PASSWD, db=db, charset=u"utf8").cursor()
     return cursor
 
 
 class MySQLDBPackage(object):
 
     def __init__(self):
-        self.HOST = host
-        self.USER = user
-        self.PASSWD = pwd
-        self.DB = db
+        self.HOST = HOST
+        self.USER = USER
+        self.PASSWD = PASSWD
+        self.DB = DB
         self.PORT = 3306
         self.CHARSET = u"utf8"
 
@@ -82,17 +82,17 @@ class MySQLDBPackage(object):
 
 if __name__ == u"__main__":
     print u"{0} start testing MySQLDBPackage.query".format(datetime.now())
-    db = MySQLDBPackage()
-    result = db.query(sql=u"SELECT now();", fetchone=True)
+    dbi = MySQLDBPackage()
+    result = dbi.query(sql=u"SELECT now();", fetchone=True)
     print u"{0} result={1}, type is {2}".format(datetime.now(), result, type(result))
 
     print u"{0} start testing MySQLDBPackage.execute".format(datetime.now())
-    result = db.execute(sql=u"SELECT now();")
+    result = dbi.execute(sql=u"SELECT now();")
     print u"{0} result={1}".format(datetime.now(), result)
 
     print u"{0} start testing MySQLDBPackage.execute_many".format(datetime.now())
     arg_list = [(1, u""), (2, u""), (1, u""), (2, u"")]
-    result = db.execute_many(sql=u"INSERT INTO mp_women_clothing.TaggedItemAttr VALUES(%s, %s);", args=arg_list)
+    result = dbi.execute_many(sql=u"INSERT INTO mp_women_clothing.TaggedItemAttr VALUES(%s, %s);", args=arg_list)
     print u"{0} result={1}".format(datetime.now(), result)
 
     print u"{0} start testing db_cursor".format(datetime.now())

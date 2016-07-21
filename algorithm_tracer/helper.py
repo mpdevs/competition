@@ -2,6 +2,7 @@
 # __author__ = "John"
 from collections import OrderedDict
 from os import path, sys
+from pandas import DataFrame
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.settings import DEBUG
 
@@ -171,8 +172,37 @@ def essential_dimension_trick(attr1, attr2, essential_tag_dict):
             return False
 
 
+def scatter_df_adapter(df, group_by_column, aggregation_column):
+    """
+    将DataFrame的数据转换成echarts散点图需要的格式
+    :param df: DataFrame
+    :param group_by_column: list(unicode)
+    :param aggregation_column: unicode
+    :return: list(list(unicode))
+    """
+    sr = df.groupby(group_by_column)[aggregation_column].sum()
+    x = [round(_, 2) for _ in sr.keys().tolist()]
+    y = [round(_, 2) for _ in sr.tolist()]
+    structure = zip(x, y)
+    return [list(i) for i in structure]
+
+
+def scatter_matrix_adapter(matrix, column_index):
+    debug(u"matrix.shape={0}, column_index={1}".format(matrix.shape, column_index))
+    return DataFrame(zip(matrix[:, column_index], [1] * matrix.shape[0]), columns=[u"feature_value", u"count"])
+
+
+def scatter_adapter(matrix, column_index):
+    df = scatter_matrix_adapter(matrix, column_index)
+    debug(u"df.shape={0}, column_index={1}".format(df.shape, column_index))
+    ret = scatter_df_adapter(df=df, group_by_column=[u"feature_value"], aggregation_column=u"count")
+    return ret
+
+
 if __name__ == u"__main__":
     from datetime import datetime
+    import numpy as np
+    import json
     _attr_list = [u",风格:通勤,款式品名:小背心/小吊带,图案:纯色,领型:圆领,颜色分类:花色,颜色分类:黑色,颜色分类:白色,颜色分类:深灰,颜色分类:浅灰,颜色分类:灰色,颜色分类:黄色,颜色分类:蓝色,颜色分类:绿色,颜色分类:西瓜红,颜色分类:玫红,颜色分类:红色,上市年份季节:2015年秋季,组合形式:单件,厚薄:厚,厚薄:薄,厚薄:适中,通勤:韩版,穿着方式:套头,衣长:常规,适用季节:春,适用季节:夏,适用季节:秋,适用季节:春夏,",
                   u",款式品名:卫衣/绒衫,服装款式细节:口袋,领型:半开领,服饰工艺:立体裁剪,颜色分类:紫色,颜色分类:黄色,颜色分类:酒红,颜色分类:红色,颜色分类:红黑,上市年份季节:2014年秋季,组合形式:两件套,厚薄:厚,厚薄:薄,厚薄:适中,袖长:长袖,裤长:长裤,面料:棉,面料:聚酯,衣门襟:拉链,适用年龄:35-39周岁,袖型:常规,服装版型:宽松,穿着方式:开衫,衣长:中长款,适用季节:春,适用季节:秋,"]
 
@@ -193,3 +223,12 @@ if __name__ == u"__main__":
     _tag_dict = {u"a": [u"我", u"你"], u"b": [u"你"], u"c": [u"他"], u"d": [u"啥"]}
     fv = make_similarity_feature(_attr1, _attr2, _tag_dict)
     print fv
+    a = [(0.5, 0.7), (0.3, 0.5), (0.5, 0.2), (1, 1)]
+    a = np.asarray(a)
+    _df = scatter_matrix_adapter(a, 0)
+    r = scatter_df_adapter(df=_df, group_by_column=[u"feature_value"], aggregation_column=u"count")
+    print r
+    print type(r)
+    print type(r[0])
+    print type(r[0][0])
+    json.dumps(r)

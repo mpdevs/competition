@@ -113,13 +113,13 @@ def construct_train_feature(raw_data, tag_dict):
 
 def sample_balance(train_x, train_y):
     """
-    将 y < 0.5 和 y > 0.5 以 1: 1 的比例返回
+    将 y <= 0.5 和 y > 0.5 以 1: 1 的比例返回
     :param train_x: numpy.array
     :param train_y: numpy.array
     :return: numpy.array
     """
     t = np.array(xrange(len(train_y)))
-    t = random.sample(t[train_y < 0.5], sum(train_y > 0.5)) + t[train_y > 0.5].tolist()
+    t = random.sample(t[train_y <= 0.5], sum(train_y > 0.5)) + t[train_y > 0.5].tolist()
     t = random.sample(t, len(t))
     train_x = train_x[t]
     train_y = train_y[t]

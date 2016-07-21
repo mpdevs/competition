@@ -11,7 +11,8 @@ define(u"address", default=u"0.0.0.0", help=u"access from remote", type=str)
 
 def main():
     tornado.options.parse_command_line()
-    app = tornado.web.Application(handlers=handler, template_path=template_path, static_path=static_path, debug=True)
+    app = tornado.web.Application(handlers=handler, template_path=template_path, static_path=static_path, debug=True,
+                                  autoreload=True)
     http_server = tornado.httpserver.HTTPServer(app)
     http_server.listen(options.port)
     print (u"app run on {0}:{1}".format(options.address, options.port))

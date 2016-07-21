@@ -8,7 +8,7 @@ from os import path, sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from competition_finder.competitive_item_calculation import CalculateCompetitiveItems as CalC
 from common.pickle_helper import pickle_load
-from common.settings import train_model_pickle
+from common.settings import *
 
 
 class VerifyResult(CalC):
@@ -17,7 +17,7 @@ class VerifyResult(CalC):
     """
     def __init__(self, source_table, target_table, date_range, industry=u"mp_women_clothing"):
         CalC.__init__(self, industry=industry, source_table=source_table, target_table=target_table)
-        self.model = pickle_load(train_model_pickle)
+        self.model = pickle_load(TRAIN_MODEL_PICKLE)
         self.competitive_item_pair_data = None
         self.date_range = date_range
         self.feature_vector = None
