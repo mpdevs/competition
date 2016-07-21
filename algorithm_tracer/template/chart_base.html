@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>{% block title %} GET START {% end %}</title>
+    <!-- 引入 echarts.js -->
+    <script src="{{ static_url ('js/echarts.js') }}"></script>
+    {% block css-link %}{% end %}
+</head>
+<body>
+{% block body %}
+<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+<div id="main" style="width: 600px;height:400px;background-color:red"></div>
+<script type="text/javascript">
+    <!-- 基于准备好的dom，初始化echarts实例 -->
+    var train_positive_chart = echarts.init(document.getElementById("main"));
+
+    <!-- 指定图表的配置项和数据 -->
+    var option = {
+        title: {
+            text: '商品销量统计'
+        },
+        tooltip: {},
+        legend: {
+            data:['销量']
+        },
+        xAxis: {
+            data: ["衬衫","羊毛衫","雪纺衫","裤子","高跟鞋","袜子"]
+        },
+        yAxis: {},
+        series: [{
+            name: '销量',
+            type: 'pie',
+            radius: '55%',
+            data:[
+                {value: 5, name: '衬衫'},
+                {value: 20, name: '羊毛衫'},
+                {value: 36, name: '雪纺衫'},
+                {value: 10, name: '裤子'},
+                {value: 10, name: '高跟鞋'},
+                {value: 20, name: '袜子'}
+            ]
+        }]
+    };
+
+    <!-- 使用刚指定的配置项和数据显示图表。-->
+    train_positive_chart.setOption(option);
+</script>
+</body>
+{% end %}
+</html>

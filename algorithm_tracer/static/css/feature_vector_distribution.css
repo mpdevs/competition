@@ -1,0 +1,17 @@
+.chart {
+    width: 600px;
+    height: 400px;
+    display: inline-block;
+}
+
+#train-positive {
+    background-color: red;
+}
+
+#train-negative {
+    background-color: blue;
+}
+
+#test {
+    background-color: green;
+}
