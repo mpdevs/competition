@@ -8,6 +8,7 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.pickle_helper import pickle_load
 from common.settings import *
 from helper import scatter_adapter, debug
+from competition_finder.db_apis import get_categories
 
 
 class ChartIndexHandler(BaseHandler):
@@ -15,7 +16,7 @@ class ChartIndexHandler(BaseHandler):
         super(ChartIndexHandler, self).__init__(application, request, **kwargs)
         self.json_data = 1
 
-    def get(self):
+    def get(self, *args, **kwargs):
         self.render(template_name=u"chart_base.html")
 
 
@@ -29,7 +30,6 @@ class FeatureVectorDistributionHandler(ChartIndexHandler):
         self.train_x_negative = pickle_load(TRAIN_X_NEGATIVE_PICKLE)
         self.test_x_positive = pickle_load(TEST_X_PICKLE)
         self.tag_dict = pickle_load(TAG_DICT_PICKLE)
-        self.category_id = None
         # for k in self.train_x_positive.keys():
         #     debug(k)
         # debug(len(self.train_x_positive))
@@ -39,10 +39,16 @@ class FeatureVectorDistributionHandler(ChartIndexHandler):
         # for k in self.test_x_positive.keys():
         #     debug(k)
         # debug(len(self.test_x_positive))
+        self.available_category = set(self.train_x_positive.keys()) & set(self.train_x_negative.keys())
+        self.available_category = list(self.available_category & set(self.test_x_positive.keys()))
+        # for category in self.available_category:
+        #     print category
+        self.category = get_categories(db=u"mp_women_clothing", category_id_list=self.available_category)
+        self.category_id = None
 
-    def get(self):
-        print self.json_data
-        self.category_id = 1623
+    def get(self, *args, **kwargs):
+        category_id = int(self.get_argument(u"category_id", u"1623"))
+        self.category_id = category_id
         train_x_positive_data = {}
         train_x_negative_data = {}
         test_x_data = {}
@@ -61,6 +67,7 @@ class FeatureVectorDistributionHandler(ChartIndexHandler):
         self.render(template_name=u"feature_vector_distribution.html",
                     train_x_positive_data=train_x_positive_data,
                     train_x_negative_data=train_x_negative_data,
-                    test_x_data=test_x_data)
+                    test_x_data=test_x_data,
+                    category=self.category)
 
 

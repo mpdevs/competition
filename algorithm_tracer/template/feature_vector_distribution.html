@@ -1,4 +1,15 @@
 {% extends "chart_base.html" %}
+{% block script-head %}
+<script type="text/javascript">
+window.onload=function(){
+  var theSelect=document.getElementsByName("category_id");
+  var theForm=document.getElementsByName("category_get");
+  theSelect[0].onchange=function(){
+     theForm[0].submit()
+  }
+}
+</script>
+{% end %}
 {% block title %}
 MarcPoint 特征分布图
 {% end %}
@@ -7,12 +18,27 @@ MarcPoint 特征分布图
 {% end %}
 {% block body %}
 <body>
-    <h2>训练正例数据特征值分布</h2>
-    <div id="train-positive" class="chart"></div>
-    <h2>训练负例数据特征值分布</h2>
-    <div id="train-negative" class="chart"></div>
-    <h2>预测数据特征值分布</h2>
-    <div id="test" class="chart"></div>
+    <div id="filter">
+        <form action="http://192.168.1.139:8280/chart/fvd" method="GET" name="category_get">
+            <select name="category_id">
+                {% for c in category %}<option value="{{ c[0] }}">{{ c[1] }}</option>
+                {% end for %}
+            </select>
+
+        </form>
+    </div>
+    <div class="chart">
+        <h2>训练正例数据特征值分布</h2>
+        <div id="train-positive" class="chart-picture"></div>
+    </div>
+    <div class="chart">
+        <h2>训练负例数据特征值分布</h2>
+        <div id="train-negative" class="chart-picture"></div>
+    </div>
+    <div class="chart">
+        <h2>预测数据特征值分布</h2>
+        <div id="test" class="chart-picture"></div>
+    </div>
 <script type="text/javascript">
     var chart = echarts.init(document.getElementById("train-positive"));
     var option = new Object();
