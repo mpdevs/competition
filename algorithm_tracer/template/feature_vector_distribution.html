@@ -21,6 +21,7 @@ MarcPoint 特征分布图
     <div id="filter">
         <form action="http://192.168.1.139:8280/chart/fvd" method="GET" name="category_get">
             <select name="category_id">
+                <option>品类选择</option>
                 {% for c in category %}<option value="{{ c[0] }}">{{ c[1] }}</option>
                 {% end for %}
             </select>
