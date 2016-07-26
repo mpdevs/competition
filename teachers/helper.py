@@ -12,7 +12,7 @@ def score_mean(df, subject_id):
     """
     todo = df.groupby([u"source_item", u"target_item"]).mean().reset_index()
     ret = todo.values
-    ret[:, 2] = np.around(ret[:, 2].astype(np.double), decimals=2)
+    ret[:, 2] = np.around(ret[:, 2].astype(np.double), decimals=4)
     ret = np.concatenate((ret, np.asarray([[subject_id] * len(ret)]).T), axis=1).tolist()
     return [tuple(i) for i in ret]
 
