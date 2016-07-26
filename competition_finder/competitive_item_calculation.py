@@ -10,8 +10,9 @@ from datetime import datetime
 from sklearn.ensemble import GradientBoostingRegressor
 from os import path, sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from common.pickle_helper import pickle_dump
+from common.db_apis import *
 from common.settings import *
+from common.pickle_helper import pickle_dump
 
 
 class CalculateCompetitiveItems(object):

@@ -8,6 +8,9 @@ from db_apis import *
 from helper import *
 from datetime import datetime
 from tqdm import tqdm
+from os import path, sys
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+from common.db_apis import *
 
 
 class TaggingAttrDesc(object):

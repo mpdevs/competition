@@ -7,8 +7,9 @@ from os import sys, path
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.pickle_helper import pickle_load
 from common.settings import *
+from common.db_apis import get_categories
 from helper import scatter_adapter, debug
-from competition_finder.db_apis import get_categories
+
 
 
 class ChartIndexHandler(BaseHandler):
