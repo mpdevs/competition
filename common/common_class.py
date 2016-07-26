@@ -17,6 +17,8 @@ if __name__ == u"__main__":
     a = AttributeDict()
     a[u"a"] = 1
     print a.a
+    a.b = 2
+    print a.b
 
 
 
