@@ -11,7 +11,7 @@ TEST_X_PICKLE = path.join(PICKLE_FILE_PATH, u"test_x")
 TAG_DICT_PICKLE = path.join(PICKLE_FILE_PATH, u"tag_dict")
 
 
-DEBUG = True
+DEBUG = False
 
 HOST = u"192.168.1.120"
 USER = u"dev"
