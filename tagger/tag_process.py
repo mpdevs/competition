@@ -331,10 +331,6 @@ def tagging_material(data, tag_preparation):
         else:
             result.append(row)
             continue
-    # import pickle
-    # f = open(u'毛.pickle', 'wb')
-    # pickle.dump(fur_dump_list, f)
-    # f.close()
     return result
 
 

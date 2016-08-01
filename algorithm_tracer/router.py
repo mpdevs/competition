@@ -3,6 +3,7 @@
 import os
 from form_handler import *
 from chart_handler import *
+from tag_handler import *
 
 
 handler = [
@@ -14,6 +15,8 @@ handler = [
     (ur"/demo/form", AlgorithmDemoFormHandler),
     (ur"/chart", ChartIndexHandler),
     (ur"/chart/fvd", FeatureVectorDistributionHandler),
+    (ur"/tag/form", TagCheckFormHandler),
+    (ur"/tag/result", TagCheckHandler),
 ]
 
 template_path = os.path.join(os.path.dirname(__file__), u"template")

@@ -245,11 +245,8 @@ if __name__ == "__main__":
 
     print u"{0}开始测试tag_to_dict".format(datetime.now())
     from common.mysql_helper import connect_db
-    from sql_constant import ATTR_META_QUERY
     import pandas as pd
     industry = u"mp_women_clothing"
-    attr_meta = pd.read_sql_query(ATTR_META_QUERY.format(industry), connect_db(industry))
-    cut = tag_to_dict(attr_meta[[u"CID", u"Attrname", u"AttrValue"]])
     _cid = 50000671
     _attr_name = u"颜色分类"
 

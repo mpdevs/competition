@@ -29,3 +29,5 @@ AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""
 
 ATTRIBUTES_QUERY = u"""SELECT ItemID, TaggedItemAttr FROM {0} WHERE TaggedItemAttr IS NOT NULL AND TaggedItemAttr != ''
 AND TaggedItemAttr LIKE ',%' {1};"""
+
+

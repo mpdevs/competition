@@ -50,7 +50,8 @@ class MySQLDBPackage(object):
             conn.close()
 
     def execute(self, sql):
-        conn = MySQLdb.connect(host=self.HOST, user=self.USER, passwd=self.PASSWD, db=self.DB, port=self.PORT)
+        conn = MySQLdb.connect(host=self.HOST, user=self.USER, passwd=self.PASSWD, db=self.DB, port=self.PORT,
+                               charset=self.CHARSET)
         cursor = conn.cursor()
         try:
             cursor.execute(sql)
@@ -65,7 +66,8 @@ class MySQLDBPackage(object):
             conn.close()
 
     def execute_many(self, sql, args):
-        conn = MySQLdb.connect(host=self.HOST, user=self.USER, passwd=self.PASSWD, db=self.DB, port=self.PORT)
+        conn = MySQLdb.connect(host=self.HOST, user=self.USER, passwd=self.PASSWD, db=self.DB, port=self.PORT,
+                               charset=self.CHARSET)
         cursor = conn.cursor()
         try:
             cursor.executemany(sql, args)

@@ -8,7 +8,9 @@ TRAIN_PAIR_INFO_QUERY = u"""SELECT a.ItemID, a.TaggedItemAttr, CASE WHEN s.ItemM
 s.ItemMainPicUrl END AS  ItemMainPicUrl FROM (SELECT * FROM TaggedItemAttr WHERE ItemID IN ({0}, {1})
 ) a LEFT JOIN (SELECT ItemID, ItemMainPicUrl FROM itemmonthlysales2015 WHERE DateRange = '2015-12-01' AND ItemID IN
 ({0}, {1})) s ON a.ItemID = s.ItemID;"""
-
-
 GET_CATEGORY_ID_QUERY = u"SELECT CategoryID FROM {0} WHERE ItemID = {1} ORDER BY DateRange"
+
+GET_TAGGED_ITEM_INFO = u"""SELECT ItemAttrDesc, TaggedItemAttr, TaggedBrandName, TaggedColor, TaggedMaterial
+FROM TaggedItemAttr WHERE ItemID = {0} LIMIT 1;"""
+
 

@@ -2,6 +2,7 @@
 # __author__: "John"
 from sql_constant import *
 from mysql_helper import *
+from debug_helper import *
 import pandas as pd
 
 
@@ -17,5 +18,6 @@ def get_categories(db=u"mp_women_clothing", category_id_list=[1623, 121412004, 1
         category_filter = category_filter[0:-1] + u")"
     else:
         category_filter = u""
+    debug(CATEGORY_QUERY.format(db, category_filter))
     return pd.read_sql_query(CATEGORY_QUERY.format(db, category_filter), connect_db()).values
 
