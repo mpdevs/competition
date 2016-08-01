@@ -22,6 +22,10 @@ def get_category_id(table, item_id, db=u"mp_women_clothing"):
     return pd.read_sql_query(GET_CATEGORY_ID_QUERY.format(table, item_id), connect_db(db))
 
 
+def get_tagged_item_info(item_id, db=u"mp_women_clothing"):
+    return pd.read_sql_query(GET_TAGGED_ITEM_INFO.format(item_id), connect_db(db))
+
+
 if __name__ == u"__main__":
     _industry = u"mp_women_clothing"
     _source_table = u"itemmonthlysales2015"
@@ -53,3 +57,7 @@ if __name__ == u"__main__":
         print u"get_category_id row count={0}".format(r.values.shape[0])
     except IndexError:
         print u"no data"
+
+    print u"{0} start testing get_tagged_item_info".format(datetime.now())
+    r = get_tagged_item_info(item_id=40575063265)
+    print u"get_tagged_item_info content is {0}".format(r.values.tolist()[0])

@@ -3,7 +3,8 @@
 from tornado.web import RequestHandler as BaseHandler
 from tornado.escape import url_escape, url_unescape, json_encode, json_decode
 import json
-from os import sys, path
+from os import path
+import sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.pickle_helper import pickle_load
 from common.settings import *

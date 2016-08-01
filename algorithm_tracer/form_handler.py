@@ -2,7 +2,8 @@
 # __author__: "John"
 from tornado.web import RequestHandler as BaseHandler
 import textwrap
-from os import sys, path
+from os import path
+import sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from algorithm_demo import VerifyResult
 
