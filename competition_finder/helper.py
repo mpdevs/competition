@@ -6,12 +6,7 @@ from tqdm import tqdm
 from collections import OrderedDict
 from os import path, sys
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from common.settings import DEBUG
-
-
-def debug(var):
-    if DEBUG:
-        print (var)
+from common.debug_helper import debug
 
 
 def tag_to_dict(df):

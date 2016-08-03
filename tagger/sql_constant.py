@@ -20,3 +20,13 @@ FROM mp_portal.brand_dict b JOIN mp_portal.industry i ON b.IndustryID = i.Indust
 
 COLOR_QUERY = u"SELECT ColorGroupName, ColorName, SimilarColor, BlurredColor FROM color_group_value;"
 
+ITEM_ATTR_DESC_QUERY = u"""SELECT ItemID, CategoryID ,REPLACE(ItemAttrDesc, '，', ',') AS Attribute
+FROM {0}
+WHERE ItemID = {1} AND ItemAttrDesc IS NOT NULL AND ItemAttrDesc != '' AND ItemAttrDesc NOT LIKE '%???%';"""
+
+ITEM_ATTR_OTHER_QUERY = u"""SELECT ItemID, CategoryID ,
+CONCAT_WS('', REPLACE(ShopName, '，', ','), REPLACE(ItemSubTitle, '，', ','), REPLACE(ItemName, '，', ',')) AS Attribute
+FROM {0} WHERE ItemID = {1} AND (ItemAttrDesc IS NULL OR ItemAttrDesc = '' OR ItemAttrDesc LIKE '%???%');"""
+
+CATEGORY_BY_ITEM_QUERY = u"SELECT DISTINCT CategoryID FROM {0} WHERE ItemID = {1};"
+

@@ -1,6 +1,6 @@
 # coding: utf-8
 # __author__ = "John"
-from os import path
+from os import path, chdir
 import sys
 import jieba
 import re
@@ -38,35 +38,28 @@ def brand_unify(brand_name, brand_list):
         return brand_name
 
 
-def tag_fuzzy_attr(documents, library):
-    return
-
-
-def tag_multiple_value(documents, library):
-    return
-
-
 def unicode_decoder(string):
+    string = strip(string)
     try:
-        string = strip(string).encode(u"latin-1")
+        string = string.encode(u"latin-1")
     except UnicodeEncodeError:
-        return strip(string)
+        return string
     try:
-        string = strip(string).decode(u"utf-8")
+        string = string.decode(u"utf-8")
         return string
     except UnicodeDecodeError:
         pass
     try:
-        string = strip(string).decode(u"gbk")
+        string = string.decode(u"gbk")
         return string
     except UnicodeDecodeError:
         pass
     try:
-        string = strip(string).decode(u"gb2312")
+        string = string.decode(u"gb2312")
         return string
     except UnicodeDecodeError:
         # return "UnknownEncoding" + original_string
-        return strip(string).decode(u"latin-1")
+        return string.decode(u"latin-1")
 
 
 def strip(string):
@@ -94,8 +87,9 @@ def attr_value_chunk(value):
     return value
 
 
-def export_excel(data, category, category_id):
+def export_excel(data, category, category_id, dir_name):
     import pandas as pd
+    chdir(path.join(path.dirname(path.abspath(__file__)), dir_name))
     df = pd.DataFrame(list(data), columns=[u"ItemID", u"DisplayName", u"AttrValue"])
     df.to_excel(
         excel_writer=pd.ExcelWriter(u"{0}.xlsx".format(category)), sheet_name=str(category_id), encoding=u"utf-8"
@@ -135,10 +129,12 @@ def generate_color_dict():
 def color_cut(string):
     punctuations_string = ur"[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？、~@#￥%……&*（）]+"
     punctuations_removed = re.sub(punctuations_string, u"", strip(string))
+    keep_list = [u"色", u"粉", u"红", u"黄", u"灰", u"金", u"蓝", u"绿", u"紫", u"黑"]
     ret = []
     for word in list(jieba.cut(punctuations_removed)):
-        if u"色" in word:
-            ret.append(word)
+        for keep in keep_list:
+            if word.find(keep) > -1 and strip(word) != u"":
+                ret.append(word)
     return set(ret)
 
 

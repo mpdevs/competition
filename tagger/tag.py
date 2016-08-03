@@ -7,7 +7,7 @@
 from db_apis import *
 from helper import *
 from tqdm import tqdm
-from os import path, sys
+from os import path, sys, makedirs
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.db_apis import *
 from common.settings import INFO
@@ -35,6 +35,7 @@ class AttrTagger(object):
         self.tagged_material = None
         self.error_info = None
         self.has_data = True
+        self.item_id = None
         self.color_list = get_color().values.tolist()
         if INFO:
             self.attr_keys = set()
@@ -51,12 +52,22 @@ class AttrTagger(object):
         用于重载时候代码复用
         :return:
         """
+        self.tag_df = self.tag_df[self.tag_df.CID == self.category_id]
         tag_list = self.tag_df.DisplayName.values.tolist()
         external_tag_list = [u"品牌"]
-        return tag_list + external_tag_list
+        self.tag_list = list(set(tag_list)) + external_tag_list
+        return
     # endregion
 
     # region 数据准备：取数据、解析数据
+    def get_data(self):
+        print u"{0} 正在获取品类<{1}>的商品描述和店铺数据...".format(datetime.now(), self.category_id)
+        self.items_data = get_items_attr_data(db=self.db, table=self.table, category_id=self.category_id)
+        print u"{0} 品类<{1}>数据获取完成，一共{2}条数据...".format(
+            datetime.now(), self.category_id, self.items_data.values.shape[0])
+        self.items_no_attr_data = get_items_no_attr_data(db=self.db, table=self.table, category_id=self.category_id)
+        return
+
     def prepare_data(self):
         """
         有AttrDesc和没有AttrDesc会同时执行，因为解析方式不一样，所以调用的函数不同
@@ -66,13 +77,8 @@ class AttrTagger(object):
         self.has_data = True
         if INFO:
             self.none_attr_value = set()
-        self.tag_list = self.make_tag_list()
-        print u"{0} 正在获取品类<{1}>的商品描述和店铺数据...".format(datetime.now(), self.category_id)
-        self.items_data = get_items_attr_data(db=self.db, table=self.table, category_id=self.category_id)
-        print u"{0} 品类<{1}>数据获取完成，一共{2}条数据...".format(
-            datetime.now(), self.category_id, self.items_data.values.shape[0])
-        self.items_no_attr_data = get_items_no_attr_data(db=self.db, table=self.table, category_id=self.category_id)
-
+        self.make_tag_list()
+        self.get_data()
         print u"{0} 正在转换品类<{1}>数据格式...".format(datetime.now(), self.category_id)
         self.tagged_items, self.error_info = self.attr_desc_parser()
         self.items_data = self.items_data.ItemID.values.tolist()
@@ -166,53 +172,11 @@ class AttrTagger(object):
             return None
         if key == u"品牌":
             ret = brand_unify(value, self.brand_list)
-        elif key == u"材质成分":
-            material_dict = dict()
-            material_list = []
-            # valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
-            for material_purity in value.split(u" "):
-                purity = re.findall(ur"\d+\.?\d*", material_purity)[0]
-                material = material_purity.replace(purity, u"").replace(u"%", u"")
-                if u"(" in material and u")" in material:
-                    material = material[material.find(u"(") + len(u"("): material.find(u")")]
-                if u"（" in material and u"）" in material:
-                    material = material[material.find(u"（") + len(u"（"): material.find(u"）")]
-                if material not in [u"其他", u"其它"]:
-                    material_dict.update({material: purity})
-            for k, v in material_dict.iteritems():
-                material_list.append(u"{0}-{1}".format(k, v))
-            self.current_attr_dict.update({key: material_list})
-            return
         # 特殊的结构
+        elif key == u"材质成分":
+            ret = value
         elif key in [u"颜色", u"颜色分类", u"主要颜色"]:
-            color_set = set(color_cut(value))
-            # row: 0:ColorGroupName, 1:ColorName, 2:SimilarColor, 3:BlurredColor
-            # 先判断是否有相似颜色，有则返回颜色，没有则判断是否有模糊色，有模糊色就返回颜色，最后再判断是否有颜色
-            # for row in self.color_list:
-            #     if row[2]:
-            #         for s in row[2].split(u","):
-            #             if value.find(s) > -1:
-            #                 color_set.add(row[1])
-            #             else:
-            #                 if row[3]:
-            #                     if value.find(row[3]):
-            #                         color_set.add(row[1])
-            #                         self.none_attr_value.add((str(self.current_item_id), key, value))
-            #                     else:
-            #                         continue
-            #                 else:
-            #                     continue
-            #     else:
-            #         if value.find(row[1]):
-            #             color_set.add(row[1])
-            #         else:
-            #             continue
-            # if len(color_set) > 0:
-            #     self.none_attr_value.add((str(self.current_item_id), key, value))
-            color_dict = {u"颜色": list(color_set)}
-            self.current_attr_dict.update(color_dict)
-            return
-        # 通用的处理方式
+            ret = list(color_cut(value))
         else:
             # 用属性值在商品描述匹配
             valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
@@ -246,6 +210,9 @@ class AttrTagger(object):
 
     # region 根据品类调度的主程序
     def main(self):
+        dir_name = datetime.now().strftime(u"%Y%m%d%H%M%S")
+        dir_path = path.join(path.dirname(path.abspath(__file__)), dir_name)
+        makedirs(dir_path)
         for category_id in tqdm(self.category_dict.keys()):
             self.category_id = category_id
             self.prepare_data()
@@ -253,7 +220,8 @@ class AttrTagger(object):
                 continue
             self.tag_attr_by_desc()
             export_excel(
-                data=self.none_attr_value, category=self.category_dict[self.category_id], category_id=self.category_id
+                data=self.none_attr_value, category=self.category_dict[self.category_id], category_id=self.category_id,
+                dir_name=dir_name
             )
             self.update_tag()
         return
@@ -370,6 +338,59 @@ class ColorTagger(AttrTagger):
         return ret
 # endregion
 
+
+# region 针对某个ItemID打标签
+class OneItemTagger(AttrTagger):
+    def __init__(self, db, table):
+        AttrTagger.__init__(self, db=db, table=table)
+
+    def get_data(self):
+        print u"{0} 正在获取商品ID<{1}>的商品描述和店铺数据...".format(datetime.now(), self.item_id)
+        self.items_data = get_item_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        print u"{0} 商品ID<{1}>获取成功...".format(datetime.now(), self.item_id)
+        self.items_no_attr_data = get_item_no_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        return
+
+    def tag_value_process(self, key, value):
+        if len(value) > 512:
+            return None
+        if key == u"品牌":
+            ret = brand_unify(value, self.brand_list)
+        # 特殊的结构
+        if key == u"材质成分":
+            ret = value
+        elif key in [u"颜色", u"颜色分类", u"主要颜色"]:
+            ret = list(color_cut(value))
+        else:
+            # 用属性值在商品描述匹配
+            valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
+            match_list = []
+            for v in valid_value_list:
+                # 匹配到维度值的时候，需要把所有的匹配结果纳入其中
+                if value.find(v) > -1:
+                    match_list.append(v)
+                # 匹配不到就存放到一个列表，方便导出
+                else:
+                    self.none_attr_value.add((str(self.current_item_id), key, value))
+            if match_list:
+                ret = u",".join(match_list)
+            else:
+                ret = None
+        return ret
+
+    # region 根据商品ID调度的主程序
+    def main(self, item_id):
+        self.item_id = item_id
+        self.category_id = get_category_by_item_id(db=self.db, table=self.table, item_id=self.item_id)
+        self.prepare_data()
+        if not self.has_data:
+            return
+        self.tag_attr_by_desc()
+        self.update_tag()
+        return
+    # endregion
+# endregion
+
 if __name__ == u"__main__":
     _db = u"mp_women_clothing"
     _table = u"TaggedItemAttr"
@@ -377,8 +398,10 @@ if __name__ == u"__main__":
     # at.main()
     # bt = BrandTagger(db=_db, table=_table)
     # bt.main()
-    ct = ColorTagger(db=_db, table=_table)
-    ct.main()
+    # ct = ColorTagger(db=_db, table=_table)
+    # ct.main()
     # mt = MaterialTagger(db=_db, table=_table)
     # mt.main()
+    oit = OneItemTagger(db=_db, table=_table)
+    oit.main(item_id=526270140664)
 
