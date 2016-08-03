@@ -10,7 +10,10 @@ s.ItemMainPicUrl END AS  ItemMainPicUrl FROM (SELECT * FROM TaggedItemAttr WHERE
 ({0}, {1})) s ON a.ItemID = s.ItemID;"""
 GET_CATEGORY_ID_QUERY = u"SELECT CategoryID FROM {0} WHERE ItemID = {1} ORDER BY DateRange"
 
-GET_TAGGED_ITEM_INFO = u"""SELECT ItemAttrDesc, TaggedItemAttr, TaggedBrandName, TaggedColor, TaggedMaterial
+GET_TAGGED_ITEM_INFO = u"""SELECT ItemAttrDesc, TaggedItemAttr, TaggedBrandName, TaggedColor, TaggedMaterial, CategoryID
 FROM TaggedItemAttr WHERE ItemID = {0} LIMIT 1;"""
+
+GET_CATEGORY_DISPLAYNAME_QUERY = u"""SELECT DisplayName, CName FROM attr_value
+WHERE CID = {0} AND IsTag = 'y' AND Flag = 'A';"""
 
 

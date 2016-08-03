@@ -26,6 +26,10 @@ def get_tagged_item_info(item_id, db=u"mp_women_clothing"):
     return pd.read_sql_query(GET_TAGGED_ITEM_INFO.format(item_id), connect_db(db))
 
 
+def get_category_displayname(category_id):
+    return pd.read_sql_query(GET_CATEGORY_DISPLAYNAME_QUERY.format(category_id), connect_db())
+
+
 if __name__ == u"__main__":
     _industry = u"mp_women_clothing"
     _source_table = u"itemmonthlysales2015"
@@ -61,3 +65,11 @@ if __name__ == u"__main__":
     print u"{0} start testing get_tagged_item_info".format(datetime.now())
     r = get_tagged_item_info(item_id=40575063265)
     print u"get_tagged_item_info content is {0}".format(r.values.tolist()[0])
+
+    print u"{0} start testing get_category_displayname".format(datetime.now())
+    r = get_category_displayname(category_id=1623)
+    print u"get_category_displayname content is {0}".format(r.values.tolist()[0])
+
+    print u"".join(r.values.tolist()[0])
+
+

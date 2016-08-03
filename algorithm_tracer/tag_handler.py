@@ -1,7 +1,7 @@
 # coding: utf-8
 # __author__: u"John"
 from tornado.web import RequestHandler as BaseHandler
-from db_apis import get_tagged_item_info
+from db_apis import *
 
 
 class TagCheckFormHandler(BaseHandler):
@@ -12,6 +12,10 @@ class TagCheckFormHandler(BaseHandler):
 class TagCheckHandler(BaseHandler):
     def post(self, *args, **kwargs):
         item_id = int(self.get_argument(u"ItemID", 0))
-        ret = get_tagged_item_info(item_id=item_id).values.tolist()[0]
-        self.render(u"tag_check.html", item=ret)
+        item = get_tagged_item_info(item_id=item_id).values.tolist()[0]
+        category_id = item[5]
+        attr_dict = get_category_displayname(category_id=category_id).values.tolist()
+        item.append(attr_dict[0][1])
+        displayname_list = [u"".join(i[0]) for i in attr_dict]
+        self.render(u"tag_check.html", item=item, displayname_list=displayname_list)
 
