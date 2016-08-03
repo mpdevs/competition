@@ -114,3 +114,10 @@ color:#fff;
     display: block;
     color: #4A90E2;
 }
+#PAGE1{
+margin:0 auto;
+}
+.bxslider li img{
+margin: 0 auto;
+width:100%;
+}
