@@ -2,16 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Poem Maker Pro</title>
+    <title>宏原研发工具站</title>
+    <link href="{{ static_url ('css/index.css') }}" rel="stylesheet" type="text/css">
+    <link href="{{ static_url ('css/index_addition.css') }}" rel="stylesheet" type="text/css">
 </head>
 <body>
-    <h1>Enter terms below.</h1>
-    <form method="post" action="/poem">
-        <p>Plural noun<br><input type="text" name="noun1"></p>
-        <p>Singular noun<br><input type="text" name="noun2"></p>
-        <p>Verb (past tense)<br><input type="text" name="verb"></p>
-        <p>Noun<br><input type="text" name="noun3"></p>
-        <input type="submit">
-    </form>
+    <div class="TOP">
+            <div class="LOGO_0" id="LOGO_0_ABOUT"></div>
+                <ul class="NAV_0" id="NAV_0_ABOUT">
+                    <li><a href="/">首页</a></li>
+                    <li><a href="/demo/form">竟品计算</a></li>
+                    <li><a href="/chart/fvd">特征分布</a></li>
+                    <li><a href="/tag/form">标签检验</a></li>
+                </ul>
+    </div>
+<div id="PAGE1" class="PAGE">
+    <div class="bx-wrapper" style="max-width: 100%;">
+        <div class="bx-viewport" style="width: 100%; overflow: hidden; position: relative; height: 464px;">
+            <ul class="bxslider" style="width: 315%; position: relative; transition-duration: 0s; transform: translate3d(-990px, 0px, 0px);">
+                <li style="float: left; list-style: none; position: relative; width: 990px;" class="bx-clone">
+                    <img src="{{ static_url ('img/background.jpg') }}">
+                </li>
+  			<li style="float: left; list-style: none; position: relative; width: 990px;">
+                <img src="{{ static_url ('img/background.jpg') }}">
+            </li>
+		    <li style="float: left; list-style: none; position: relative; width: 990px;" class="bx-clone">
+                <img src="{{ static_url ('img/background.jpg') }}">
+            </li>
+            </ul>
+        </div>
+        <div class="bx-controls bx-has-pager bx-has-controls-direction">
+            <div class="bx-pager bx-default-pager">
+                <div class="bx-pager-item">
+                    <a href="" data-slide-index="0" class="bx-pager-link active">1</a>
+                </div>
+            </div>
+            <div class="bx-controls-direction">
+                <a class="bx-prev disabled" href="">Prev</a>
+                <a class="bx-next disabled" href="">Next</a>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>
+
