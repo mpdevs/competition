@@ -126,14 +126,19 @@ def generate_color_dict():
     f.close()
 
 
+def generate_color_dict_for_jieba():
+    data = get_color().values.tolist()
+    return
+
+
 def color_cut(string):
     punctuations_string = ur"[\s+\.\!\/_,$%^*(+\"\']+|[+——！，。？、~@#￥%……&*（）]+"
     punctuations_removed = re.sub(punctuations_string, u"", strip(string))
-    keep_list = [u"色", u"粉", u"红", u"黄", u"灰", u"金", u"蓝", u"绿", u"紫", u"黑"]
+    keep_list = [u"色", u"粉", u"红", u"黄", u"灰", u"金", u"蓝", u"绿", u"紫", u"黑", u"白"]
     ret = []
     for word in list(jieba.cut(punctuations_removed)):
         for keep in keep_list:
-            if word.find(keep) > -1 and strip(word) != u"":
+            if word.find(keep) > -1 and strip(word) not in [u"", u"色"]:
                 ret.append(word)
     return set(ret)
 

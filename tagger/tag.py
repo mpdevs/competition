@@ -21,7 +21,7 @@ class AttrTagger(object):
         self.table = table
         self.category_dict = {int(row[0]): row[1] for row in get_categories(db=self.db, category_id_list=[])}
         self.tag_list = None
-        self.tag_df = get_attribute_meta(db=self.db)
+        self.tag_df = get_tag_attribute_meta(db=self.db)
         self.category_id = None
         self.items_data = None
         self.items_no_attr_data = None
@@ -365,10 +365,10 @@ class OneItemTagger(AttrTagger):
             # 用属性值在商品描述匹配
             valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
             match_list = []
-            for v in valid_value_list:
+            for val in valid_value_list:
                 # 匹配到维度值的时候，需要把所有的匹配结果纳入其中
-                if value.find(v) > -1:
-                    match_list.append(v)
+                if value.find(val) > -1:
+                    match_list.append(val)
                 # 匹配不到就存放到一个列表，方便导出
                 else:
                     self.none_attr_value.add((str(self.current_item_id), key, value))
@@ -403,5 +403,5 @@ if __name__ == u"__main__":
     # mt = MaterialTagger(db=_db, table=_table)
     # mt.main()
     oit = OneItemTagger(db=_db, table=_table)
-    oit.main(item_id=526270140664)
+    oit.main(item_id=524774744755)
 

@@ -9,13 +9,13 @@ handler = [
     (ur"/", IndexHandler),
     (ur"/reverse/(\w+)", ReverseHandler),
     (ur"/wrap", WrapHandler),
-    (ur"/poem", PoemPageHandler),
     (ur"/demo/result", AlgorithmDemoHandler),
     (ur"/demo/form", AlgorithmDemoFormHandler),
     (ur"/chart", ChartIndexHandler),
     (ur"/chart/fvd", FeatureVectorDistributionHandler),
     (ur"/tag/form", TagCheckFormHandler),
     (ur"/tag/result", TagCheckHandler),
+    (ur"/retag/form", RetagFormHandler),
 ]
 
 template_path = path.join(path.dirname(__file__), u"template")

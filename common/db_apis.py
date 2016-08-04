@@ -7,6 +7,7 @@ import pandas as pd
 
 
 def get_attribute_meta(db=u"mp_women_clothing"):
+    debug(ATTR_META_QUERY.format(db))
     return pd.read_sql_query(ATTR_META_QUERY.format(db), connect_db(db))
 
 

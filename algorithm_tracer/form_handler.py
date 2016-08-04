@@ -13,15 +13,6 @@ class IndexHandler(BaseHandler):
         self.render(u"index.html")
 
 
-class PoemPageHandler(BaseHandler):
-    def post(self):
-        noun1 = self.get_argument(u"noun1")
-        noun2 = self.get_argument(u"noun2")
-        verb = self.get_argument(u"verb")
-        noun3 = self.get_argument(u"noun3")
-        self.render(u"poem.html", roads=noun1, wood=noun2, made=verb, difference=noun3)
-
-
 class ReverseHandler(BaseHandler):
     def get(self, word):
         self.write(word[::-1])

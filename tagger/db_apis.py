@@ -88,6 +88,11 @@ def get_category_by_item_id(db, table, item_id):
     return pd.read_sql_query(CATEGORY_BY_ITEM_QUERY.format(table, item_id), connect_db(db)).values[0][0]
 
 
+def get_tag_attribute_meta(db=u"mp_women_clothing"):
+    debug(TAG_ATTR_META_QUERY.format(db))
+    return pd.read_sql_query(TAG_ATTR_META_QUERY.format(db), connect_db(db))
+
+
 if __name__ == u"__main__":
     _industry = u"mp_women_clothing"
     _table = u"TaggedItemAttr"

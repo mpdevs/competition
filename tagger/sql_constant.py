@@ -1,5 +1,7 @@
 # coding: utf-8
 # __author__ = u"John"
+TAG_ATTR_META_QUERY = u"""SELECT a.CID, a.Attrname, a.DisplayName, a.AttrValue, a.Flag FROM mp_portal.attr_value AS a
+JOIN mp_portal.industry AS i ON a.IndustryID = i.IndustryID WHERE a.IsTag='y' AND a.Flag='A' AND i.DBName ='{0}';"""
 
 
 ITEMS_ATTR_DESC_QUERY = u"""SELECT ItemID, CategoryID ,REPLACE(ItemAttrDesc, '，', ',') AS Attribute
