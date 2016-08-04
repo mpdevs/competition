@@ -7,8 +7,7 @@
 from db_apis import *
 from helper import *
 from tqdm import tqdm
-from os import path, sys, makedirs
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+from os import makedirs
 from common.db_apis import *
 from common.settings import INFO
 
@@ -103,10 +102,6 @@ class AttrTagger(object):
     # region 标签的生成
     def tag_attr_by_desc(self):
         print u"{0} 正在打包<{1}>条数据".format(datetime.now(), len(self.tagged_items))
-        for i, value in enumerate(self.tagged_items):
-            if isinstance(value, unicode):
-                # print i, value
-                pass
         self.items_attr = tag_setter(self.tagged_items)
         return
 
@@ -170,6 +165,8 @@ class AttrTagger(object):
     def tag_value_process(self, key, value):
         if len(value) > 512:
             return None
+        else:
+            pass
         if key == u"品牌":
             ret = brand_unify(value, self.brand_list)
         # 特殊的结构
@@ -236,7 +233,8 @@ class BrandTagger(AttrTagger):
         self.tag_column = u"TaggedBrandName"
 
     def make_tag_list(self):
-        return [u"品牌"]
+        self.tag_list = [u"品牌"]
+        return
 # endregion
 
 
@@ -247,7 +245,8 @@ class MaterialTagger(AttrTagger):
         self.tag_column = u"TaggedMaterial"
 
     def make_tag_list(self):
-        return [u"材质成分"]
+        self.tag_list = [u"材质成分"]
+        return
 
     def tag_value_process(self, key, value):
         """
@@ -292,57 +291,47 @@ class ColorTagger(AttrTagger):
         self.tag_column = u"TaggedColor"
 
     def make_tag_list(self):
-        return [u"颜色", u"颜色分类", u"主要颜色"]
+        self.tag_list = [u"颜色", u"颜色分类", u"主要颜色"]
+        return
+
+    def tag_attr_by_desc(self):
+        print u"{0} 正在打包<{1}>条数据".format(datetime.now(), len(self.tagged_items))
+        self.items_attr = color_group_setter(self.tagged_items)
+        return
 
     def tag_value_process(self, key, value):
+        """
+        颜色组匹配规则：
+        1. value的值包含颜色组，返回颜色组
+        2. value的值包含颜色，返回颜色组
+        3. value的值包含任何一个相似色，返回颜色组
+        4. value的值包含模糊色， 返回颜色组
+        :param key:
+        :param value:
+        :return:
+        """
         if key in [u"颜色", u"颜色分类", u"主要颜色"]:
-            color_group_dict = dict()
-            color_set = color_cut(value)
-            for color in color_set:
+            color_list = list(color_cut(value))
+            ret = []
+            for color in color_list:
+                # row - 0:ColorGroup, 1:ColorName, 2:SimilarColor, 3:BlurredColor
                 for row in self.color_list:
-                    for col in row:
-                        if col:
-                            if color in col.split(u",") and color:
-                                if color in color_group_dict.keys():
-                                    color_group_dict[row[0]].append(color)
-                                else:
-                                    color_group_dict[row[0]] = [color]
-                            else:
-                                pass
-                        else:
-                            pass
+                    row_colors = row[0].split(u",") + row[1].split(u",") + row[2].split(u",") + row[3].split(u",")
+                    if color in row_colors:
+                        ret.append(row[0])
                     else:
-                        pass
-                else:
-                    pass
-            if len(color_group_dict) > 0:
-                ret = {k: list(set(v)) for k, v in color_group_dict.keys()}
-                self.current_attr_dict.update(ret)
-            return
-        # 通用的处理方式
+                        continue
+            return list(set(ret))
         else:
-            # 用属性值在商品描述匹配
-            valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
-            match_list = []
-            for v in valid_value_list:
-                # 匹配到维度值的时候，需要把所有的匹配结果纳入其中
-                if value.find(v) > -1:
-                    match_list.append(v)
-                # 匹配不到就存放到一个列表，方便导出
-                else:
-                    self.none_attr_value.add((str(self.current_item_id), key, value))
-            if match_list:
-                ret = u",".join(match_list)
-            else:
-                ret = None
-        return ret
+            return None
 # endregion
 
 
-# region 针对某个ItemID打标签
-class OneItemTagger(AttrTagger):
+# region 针对某个ItemID打Attr标签
+class OneItemAttrTagger(AttrTagger):
     def __init__(self, db, table):
         AttrTagger.__init__(self, db=db, table=table)
+        return
 
     def get_data(self):
         print u"{0} 正在获取商品ID<{1}>的商品描述和店铺数据...".format(datetime.now(), self.item_id)
@@ -350,33 +339,6 @@ class OneItemTagger(AttrTagger):
         print u"{0} 商品ID<{1}>获取成功...".format(datetime.now(), self.item_id)
         self.items_no_attr_data = get_item_no_attr_data(db=self.db, table=self.table, item_id=self.item_id)
         return
-
-    def tag_value_process(self, key, value):
-        if len(value) > 512:
-            return None
-        if key == u"品牌":
-            ret = brand_unify(value, self.brand_list)
-        # 特殊的结构
-        if key == u"材质成分":
-            ret = value
-        elif key in [u"颜色", u"颜色分类", u"主要颜色"]:
-            ret = list(color_cut(value))
-        else:
-            # 用属性值在商品描述匹配
-            valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
-            match_list = []
-            for val in valid_value_list:
-                # 匹配到维度值的时候，需要把所有的匹配结果纳入其中
-                if value.find(val) > -1:
-                    match_list.append(val)
-                # 匹配不到就存放到一个列表，方便导出
-                else:
-                    self.none_attr_value.add((str(self.current_item_id), key, value))
-            if match_list:
-                ret = u",".join(match_list)
-            else:
-                ret = None
-        return ret
 
     # region 根据商品ID调度的主程序
     def main(self, item_id):
@@ -391,9 +353,114 @@ class OneItemTagger(AttrTagger):
     # endregion
 # endregion
 
+
+# region 针对某个ItemID打BrandName标签
+class OneItemBrandTagger(BrandTagger):
+    def __init__(self, db, table):
+        BrandTagger.__init__(self, db=db, table=table)
+        return
+
+    def get_data(self):
+        print u"{0} 正在获取商品ID<{1}>的商品描述和店铺数据...".format(datetime.now(), self.item_id)
+        self.items_data = get_item_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        print u"{0} 商品ID<{1}>获取成功...".format(datetime.now(), self.item_id)
+        self.items_no_attr_data = get_item_no_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        return
+
+    # region 根据商品ID调度的主程序
+    def main(self, item_id):
+        self.item_id = item_id
+        self.category_id = get_category_by_item_id(db=self.db, table=self.table, item_id=self.item_id)
+        self.prepare_data()
+        if self.has_data:
+            pass
+        else:
+            return
+        self.tag_attr_by_desc()
+        self.update_tag()
+        return
+    # endregion
+# endregion
+
+
+# region 针对某个ItemID打Material标签
+class OneItemMaterialTagger(MaterialTagger):
+    def __init__(self, db, table):
+        MaterialTagger.__init__(self, db=db, table=table)
+        return
+
+    def get_data(self):
+        print u"{0} 正在获取商品ID<{1}>的商品描述和店铺数据...".format(datetime.now(), self.item_id)
+        self.items_data = get_item_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        print u"{0} 商品ID<{1}>获取成功...".format(datetime.now(), self.item_id)
+        self.items_no_attr_data = get_item_no_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        return
+
+    # region 根据商品ID调度的主程序
+    def main(self, item_id):
+        self.item_id = item_id
+        self.category_id = get_category_by_item_id(db=self.db, table=self.table, item_id=self.item_id)
+        self.prepare_data()
+        if not self.has_data:
+            return
+        self.tag_attr_by_desc()
+        self.update_tag()
+        return
+    # endregion
+# endregion
+
+
+# region 针对某个ItemID打Color标签
+class OneItemColorTagger(ColorTagger):
+    def __init__(self, db, table):
+        ColorTagger.__init__(self, db=db, table=table)
+        return
+
+    def get_data(self):
+        print u"{0} 正在获取商品ID<{1}>的商品描述和店铺数据...".format(datetime.now(), self.item_id)
+        self.items_data = get_item_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        print u"{0} 商品ID<{1}>获取成功...".format(datetime.now(), self.item_id)
+        self.items_no_attr_data = get_item_no_attr_data(db=self.db, table=self.table, item_id=self.item_id)
+        return
+
+    # region 根据商品ID调度的主程序
+    def main(self, item_id):
+        self.item_id = item_id
+        self.category_id = get_category_by_item_id(db=self.db, table=self.table, item_id=self.item_id)
+        self.prepare_data()
+        if not self.has_data:
+            return
+        self.tag_attr_by_desc()
+        self.update_tag()
+        return
+    # endregion
+# endregion
+
+
+# region 针对某个ItemID打所有标签
+class OneItemTagger(object):
+    def __init__(self, db, table):
+        self.db = db
+        self.table = table
+        return
+
+    def main(self, item_id):
+        one_attr_tagger = OneItemAttrTagger(db=self.db, table=self.table)
+        one_attr_tagger.main(item_id=item_id)
+        one_brand_tagger = OneItemBrandTagger(db=self.db, table=self.table)
+        one_brand_tagger.main(item_id=item_id)
+        one_material_tagger = OneItemMaterialTagger(db=self.db, table=self.table)
+        one_material_tagger.main(item_id=item_id)
+        one_color_tagger = OneItemColorTagger(db=self.db, table=self.table)
+        one_color_tagger.main(item_id=item_id)
+        return
+# endregion
+
+
 if __name__ == u"__main__":
     _db = u"mp_women_clothing"
     _table = u"TaggedItemAttr"
+    _item_id = 524774744755
     # at = AttrTagger(db=_db, table=_table)
     # at.main()
     # bt = BrandTagger(db=_db, table=_table)
@@ -402,6 +469,11 @@ if __name__ == u"__main__":
     # ct.main()
     # mt = MaterialTagger(db=_db, table=_table)
     # mt.main()
-    oit = OneItemTagger(db=_db, table=_table)
-    oit.main(item_id=524774744755)
+    # brand = OneItemBrandTagger(db=_db, table=_table)
+    # brand.main(item_id=_item_id)
+    oc = OneItemColorTagger(db=_db, table=_table)
+    oc.main(item_id=_item_id)
+    # one = OneItemTagger(db=_db, table=_table)
+    # one.main(item_id=_item_id)
+
 

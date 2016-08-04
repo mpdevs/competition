@@ -1,10 +1,8 @@
 # coding: utf-8
 # __author__ = "John"
 from os import path, chdir
-import sys
 import jieba
 import re
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from db_apis import get_color
 
 
@@ -15,14 +13,33 @@ def tag_setter(parsed_attr_desc_list):
     :return: list(unicode)
     """
     for i in xrange(len(parsed_attr_desc_list)):
-        new_format = u","
+        format_for_db = u","
         for dimension, value_list in parsed_attr_desc_list[i].iteritems():
             if value_list:
                 for value in value_list:
-                    new_format += u"{0}:{1},".format(dimension, value)
-        if len(new_format) <= 2:
-            new_format = u""
-        parsed_attr_desc_list[i] = new_format
+                    format_for_db += u"{0}:{1},".format(dimension, value)
+        if len(format_for_db) <= 2:
+            format_for_db = u""
+        parsed_attr_desc_list[i] = format_for_db
+    return parsed_attr_desc_list
+
+
+def color_group_setter(parsed_attr_desc_list):
+    """
+    把dict格式的标签转换成unicode类型
+    :param parsed_attr_desc_list: list(unicode)
+    :return: list(unicode)
+    """
+    for i in xrange(len(parsed_attr_desc_list)):
+        format_for_db = u","
+        for dimension, value_list in parsed_attr_desc_list[i].iteritems():
+            if value_list:
+                for value in value_list:
+                    if value:
+                        format_for_db += u"{0},".format(value)
+        if len(format_for_db) < 2:
+            format_for_db = u""
+        parsed_attr_desc_list[i] = format_for_db
     return parsed_attr_desc_list
 
 
@@ -100,7 +117,7 @@ def export_excel(data, category, category_id, dir_name):
 def generate_color_dict():
     data = get_color().values.tolist()
     dump_words = []
-    word_frequency = u"1"
+    # word_frequency = u"1"
     part_of_speech = u"n"
     for row in data:
         # 颜色组1分 模糊匹配5分 颜色匹配20分 相似匹配100分
@@ -146,5 +163,5 @@ def color_cut(string):
 if __name__ == u"__main__":
     generate_color_dict()
     s = u"酒红色（三件套）蓝色（三件套）浅灰色（三件套）"
-    for i in color_cut(s):
-        print i
+    for c in color_cut(s):
+        print c
