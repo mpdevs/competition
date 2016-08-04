@@ -194,7 +194,7 @@ class AttrTagger(object):
             else:
                 ret = None
         elif key in [u"流行元素", u"流行元素/工艺", u"图案", u"图案文化", u"中老年女装图案", u"里料图案",
-                     u"工艺", u"制作工艺", u"服饰工艺"]:
+                     u"工艺", u"制作工艺", u"服饰工艺", u"服装款式细节"]:
             # 模糊匹配
             valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
             match_list = []
