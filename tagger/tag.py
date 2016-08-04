@@ -316,8 +316,12 @@ class ColorTagger(AttrTagger):
             for color in color_list:
                 # row - 0:ColorGroup, 1:ColorName, 2:SimilarColor, 3:BlurredColor
                 for row in self.color_list:
-                    row_colors = row[0].split(u",") + row[1].split(u",") + row[2].split(u",") + row[3].split(u",")
+                    row_colors = row[0].split(u",") + row[1].split(u",") + row[2].split(u",")
                     if color in row_colors:
+                        ret.append(row[0])
+                    else:
+                        pass
+                    if row[3] and color.find(row[3]) > -1:
                         ret.append(row[0])
                     else:
                         continue
