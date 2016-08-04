@@ -214,12 +214,14 @@ class AttrTagger(object):
             self.category_id = category_id
             self.prepare_data()
             if not self.has_data:
+                print u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id)
                 continue
             self.tag_attr_by_desc()
-            export_excel(
-                data=self.none_attr_value, category=self.category_dict[self.category_id], category_id=self.category_id,
-                dir_name=dir_name
-            )
+            if len(self.none_attr_value) > 0:
+                export_excel(
+                    data=self.none_attr_value, category=self.category_dict[self.category_id],
+                    category_id=self.category_id, dir_name=dir_name
+                )
             self.update_tag()
         return
     # endregion
@@ -231,6 +233,15 @@ class BrandTagger(AttrTagger):
     def __init__(self, db, table):
         AttrTagger.__init__(self, db=db, table=table)
         self.tag_column = u"TaggedBrandName"
+        return
+
+    def get_data(self):
+        print u"{0} 正在获取品类<{1}>的商品描述和店铺数据...".format(datetime.now(), self.category_id)
+        self.items_data = get_items_attr_data(db=self.db, table=self.table, category_id=self.category_id, retag=u"")
+        print u"{0} 品类<{1}>数据获取完成，一共{2}条数据...".format(
+            datetime.now(), self.category_id, self.items_data.values.shape[0])
+        self.items_no_attr_data = get_items_no_attr_data(db=self.db, table=self.table, category_id=self.category_id)
+        return
 
     def make_tag_list(self):
         self.tag_list = [u"品牌"]
@@ -243,6 +254,15 @@ class MaterialTagger(AttrTagger):
     def __init__(self, db, table):
         AttrTagger.__init__(self, db=db, table=table)
         self.tag_column = u"TaggedMaterial"
+        return
+
+    def get_data(self):
+        print u"{0} 正在获取品类<{1}>的商品描述和店铺数据...".format(datetime.now(), self.category_id)
+        self.items_data = get_items_attr_data(db=self.db, table=self.table, category_id=self.category_id, retag=u"")
+        print u"{0} 品类<{1}>数据获取完成，一共{2}条数据...".format(
+            datetime.now(), self.category_id, self.items_data.values.shape[0])
+        self.items_no_attr_data = get_items_no_attr_data(db=self.db, table=self.table, category_id=self.category_id)
+        return
 
     def make_tag_list(self):
         self.tag_list = [u"材质成分"]
@@ -289,6 +309,15 @@ class ColorTagger(AttrTagger):
     def __init__(self, db, table):
         AttrTagger.__init__(self, db=db, table=table)
         self.tag_column = u"TaggedColor"
+        return
+
+    def get_data(self):
+        print u"{0} 正在获取品类<{1}>的商品描述和店铺数据...".format(datetime.now(), self.category_id)
+        self.items_data = get_items_attr_data(db=self.db, table=self.table, category_id=self.category_id, retag=u"")
+        print u"{0} 品类<{1}>数据获取完成，一共{2}条数据...".format(
+            datetime.now(), self.category_id, self.items_data.values.shape[0])
+        self.items_no_attr_data = get_items_no_attr_data(db=self.db, table=self.table, category_id=self.category_id)
+        return
 
     def make_tag_list(self):
         self.tag_list = [u"颜色", u"颜色分类", u"主要颜色"]

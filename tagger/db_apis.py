@@ -12,7 +12,20 @@ def get_tag_list(category_id):
     return pd.read_sql_query(TAG_DICT_QUERY.format(category_id), connect_db())
 
 
-def get_items_attr_data(db, table, category_id=1623):
+def get_items_attr_data(db, table, category_id=1623, retag=u"NeedReTag = 'y'"):
+    """
+    获取某行业某个表某个品类下面所有的商品的属性，这部分是
+    :param db:
+    :param table:
+    :param category_id:
+    :param retag:
+    :return:
+    """
+    debug(ITEMS_ATTR_DESC_QUERY.format(table, category_id))
+    return pd.read_sql_query(ITEMS_ATTR_DESC_QUERY.format(table, category_id, retag), connect_db(db))
+
+
+def get_items_attr_for_single_column_data(db, table, category_id=1623):
     """
     获取某行业某个表某个品类下面所有的商品的属性
     :param db:
@@ -20,8 +33,8 @@ def get_items_attr_data(db, table, category_id=1623):
     :param category_id:
     :return:
     """
-    debug(ITEMS_ATTR_DESC_QUERY.format(table, category_id))
-    return pd.read_sql_query(ITEMS_ATTR_DESC_QUERY.format(table, category_id), connect_db(db))
+    debug(ITEMS_ATTR_DESC_FOR_SINGLE_COLUMN_QUERY.format(table, category_id))
+    return pd.read_sql_query(ITEMS_ATTR_DESC_FOR_SINGLE_COLUMN_QUERY.format(table, category_id), connect_db(db))
 
 
 def get_items_no_attr_data(db, table, category_id=1623):
@@ -48,7 +61,7 @@ def set_tag(db, table, column_name, args):
     debug(SET_ATTR_QUERY.format(db, table, column_name) % args[0])
     for size in xrange(batch):
         start_index = size * 100
-        end_index = min((size + 1) * 100, row_count-1)
+        end_index = min((size + 1) * 100, row_count)
         data = args[start_index: end_index]
         db_connection.execute_many(sql=SET_ATTR_QUERY.format(db, table, column_name), args=data)
 
