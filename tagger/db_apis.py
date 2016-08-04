@@ -4,8 +4,6 @@ from sql_constant import *
 import pandas as pd
 from math import ceil
 from datetime import datetime
-from os import path, sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.mysql_helper import connect_db, MySQLDBPackage
 from common.debug_helper import debug
 

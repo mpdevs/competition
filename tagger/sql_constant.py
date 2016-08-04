@@ -1,5 +1,9 @@
 # coding: utf-8
 # __author__ = u"John"
+from os import path, sys
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
+
 TAG_ATTR_META_QUERY = u"""SELECT a.CID, a.Attrname, a.DisplayName, a.AttrValue, a.Flag FROM mp_portal.attr_value AS a
 JOIN mp_portal.industry AS i ON a.IndustryID = i.IndustryID WHERE a.IsTag='y' AND a.Flag='A' AND i.DBName ='{0}';"""
 

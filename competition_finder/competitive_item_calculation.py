@@ -6,13 +6,11 @@
 from helper import *
 from db_apis import *
 from collections import OrderedDict
-from datetime import datetime
 from sklearn.ensemble import GradientBoostingRegressor
-from os import path, sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.db_apis import *
 from common.settings import *
 from common.pickle_helper import pickle_dump
+from datetime import datetime
 
 
 class CalculateCompetitiveItems(object):

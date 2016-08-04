@@ -1,5 +1,8 @@
 # coding: utf-8
 # __author__ = 'John'
+from os import path, sys
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
 PREDICT_PAIR_INFO_QUERY = u"""SELECT ItemID, TaggedItemAttr, ItemMainPicUrl, DiscountPrice, CategoryID, DateRange
  FROM {0} WHERE ItemID IN ({1}, {2}) AND DateRange = '{3}' AND TaggedItemAttr LIKE ',%';"""
 

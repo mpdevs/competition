@@ -5,8 +5,6 @@ from tqdm import tqdm
 from math import ceil
 from datetime import datetime
 from sql_constant import *
-from os import path, sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.mysql_helper import connect_db, MySQLDBPackage as MySQL
 
 

@@ -4,8 +4,6 @@ from db_apis import *
 from helper import *
 import numpy as np
 from datetime import datetime
-from os import path, sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from competition_finder.competitive_item_calculation import CalculateCompetitiveItems as CalC
 from common.pickle_helper import pickle_load
 from common.settings import *

@@ -3,8 +3,6 @@
 import pandas as pd
 from datetime import datetime
 from sql_constant import *
-from os import path, sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.mysql_helper import connect_db
 
 

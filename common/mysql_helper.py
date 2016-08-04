@@ -3,8 +3,6 @@
 import MySQLdb
 from datetime import datetime
 from settings import HOST, USER, PASSWD, DB
-from os import path, sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 
 def connect_db(db=u"mp_portal"):
@@ -99,9 +97,9 @@ if __name__ == u"__main__":
 
     print u"{0} start testing db_cursor".format(datetime.now())
     db_cursor()
-
     print u"{0} start testing connect_db".format(datetime.now())
-    from competition_finder.sql_constant import CATEGORY_QUERY
+
+    from sql_constant import CATEGORY_QUERY
     import pandas as pd
     print CATEGORY_QUERY.format(u"mp_women_clothing", u"")
     connect_cursor = connect_db().cursor()

@@ -1,16 +1,10 @@
 # coding: utf-8
 # __author__: "John"
 from tornado.web import RequestHandler as BaseHandler
-from tornado.escape import url_escape, url_unescape, json_encode, json_decode
-import json
-from os import path
-import sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+from helper import scatter_adapter
 from common.pickle_helper import pickle_load
 from common.settings import *
 from common.db_apis import get_categories
-from helper import scatter_adapter, debug
-
 
 
 class ChartIndexHandler(BaseHandler):
