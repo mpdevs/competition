@@ -173,14 +173,33 @@ class AttrTagger(object):
         elif key == u"材质成分":
             ret = value
         elif key in [u"颜色", u"颜色分类", u"主要颜色"]:
-            ret = list(color_cut(value))
+            color_list = list(color_cut(value))
+            result = []
+            for color in color_list:
+                # row - 0:ColorGroup, 1:ColorName, 2:SimilarColor, 3:BlurredColor
+                for row in self.color_list:
+                    row_colors = row[1].split(u",") + row[2].split(u",")
+                    if color in row_colors:
+                        result.append(row[1])
+                        continue
+                    else:
+                        pass
+                    if row[3] and color.find(row[3]) > -1:
+                        result.append(row[1])
+                        self.none_attr_value.add((str(self.current_item_id), key, color))
+                    else:
+                        continue
+            if len(result) > 0:
+                ret = list(set(result))
+            else:
+                ret = None
         else:
             # 用属性值在商品描述匹配
             valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
             match_list = []
             for v in valid_value_list:
                 # 匹配到维度值的时候，需要把所有的匹配结果纳入其中
-                if value.find(v) > -1:
+                if value == v:
                     match_list.append(v)
                 # 匹配不到就存放到一个列表，方便导出
                 else:

@@ -21,7 +21,7 @@ def get_items_attr_data(db, table, category_id=1623, retag=u"NeedReTag = 'y'"):
     :param retag:
     :return:
     """
-    debug(ITEMS_ATTR_DESC_QUERY.format(table, category_id))
+    debug(ITEMS_ATTR_DESC_QUERY.format(table, category_id, retag))
     return pd.read_sql_query(ITEMS_ATTR_DESC_QUERY.format(table, category_id, retag), connect_db(db))
 
 
