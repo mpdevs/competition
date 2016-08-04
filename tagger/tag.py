@@ -331,6 +331,26 @@ class ColorTagger(AttrTagger):
 # endregion
 
 
+# region所有字段打标签
+class AllTagger(object):
+    def __init__(self, db, table):
+        self.db = db
+        self.table = table
+        return
+
+    def main(self):
+        attr_tagger = AttrTagger(db=self.db, table=self.table)
+        attr_tagger.main()
+        brand_tagger = BrandTagger(db=self.db, table=self.table)
+        brand_tagger.main()
+        material_tagger = MaterialTagger(db=self.db, table=self.table)
+        material_tagger.main()
+        color_tagger = ColorTagger(db=self.db, table=self.table)
+        color_tagger.main()
+
+# endregion
+
+
 # region 针对某个ItemID打Attr标签
 class OneItemAttrTagger(AttrTagger):
     def __init__(self, db, table):
@@ -475,9 +495,10 @@ if __name__ == u"__main__":
     # mt.main()
     # brand = OneItemBrandTagger(db=_db, table=_table)
     # brand.main(item_id=_item_id)
-    oc = OneItemColorTagger(db=_db, table=_table)
-    oc.main(item_id=_item_id)
+    # oc = OneItemColorTagger(db=_db, table=_table)
+    # oc.main(item_id=_item_id)
     # one = OneItemTagger(db=_db, table=_table)
     # one.main(item_id=_item_id)
-
+    all_tagger = AllTagger(db=_db, table=_table)
+    all_tagger.main()
 
