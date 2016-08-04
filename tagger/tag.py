@@ -205,10 +205,7 @@ class AttrTagger(object):
                 # 匹配不到就存放到一个列表，方便导出
                 else:
                     self.none_attr_value.add((str(self.current_item_id), key, value))
-            if match_list:
-                ret = u",".join(match_list)
-            else:
-                ret = None
+            ret = match_list
         else:
             # 精确匹配
             valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
@@ -220,10 +217,7 @@ class AttrTagger(object):
                 # 匹配不到就存放到一个列表，方便导出
                 else:
                     self.none_attr_value.add((str(self.current_item_id), key, value))
-            if match_list:
-                ret = u",".join(match_list)
-            else:
-                ret = None
+            ret = match_list
         return ret
 
     # endregion
