@@ -193,8 +193,24 @@ class AttrTagger(object):
                 ret = list(set(result))
             else:
                 ret = None
+        elif key in [u"流行元素", u"流行元素/工艺", u"图案", u"图案文化", u"中老年女装图案", u"里料图案",
+                     u"工艺", u"制作工艺", u"服饰工艺"]:
+            # 模糊匹配
+            valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
+            match_list = []
+            for v in valid_value_list:
+                # 匹配到维度值的时候，需要把所有的匹配结果纳入其中
+                if value.find(v) > -1:
+                    match_list.append(v)
+                # 匹配不到就存放到一个列表，方便导出
+                else:
+                    self.none_attr_value.add((str(self.current_item_id), key, value))
+            if match_list:
+                ret = u",".join(match_list)
+            else:
+                ret = None
         else:
-            # 用属性值在商品描述匹配
+            # 精确匹配
             valid_value_list = self.tag_df[self.tag_df.DisplayName == key].AttrValue.values.tolist()[0].split(u",")
             match_list = []
             for v in valid_value_list:

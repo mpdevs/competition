@@ -25,18 +25,6 @@ def get_items_attr_data(db, table, category_id=1623, retag=u"NeedReTag = 'y'"):
     return pd.read_sql_query(ITEMS_ATTR_DESC_QUERY.format(table, category_id, retag), connect_db(db))
 
 
-def get_items_attr_for_single_column_data(db, table, category_id=1623):
-    """
-    获取某行业某个表某个品类下面所有的商品的属性
-    :param db:
-    :param table:
-    :param category_id:
-    :return:
-    """
-    debug(ITEMS_ATTR_DESC_FOR_SINGLE_COLUMN_QUERY.format(table, category_id))
-    return pd.read_sql_query(ITEMS_ATTR_DESC_FOR_SINGLE_COLUMN_QUERY.format(table, category_id), connect_db(db))
-
-
 def get_items_no_attr_data(db, table, category_id=1623):
     """
     获取某行业某个表某个品类下面所有的商品的属性
