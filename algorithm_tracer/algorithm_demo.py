@@ -43,27 +43,29 @@ class VerifyResult(CalC):
         attr = self.competitive_item_pair_data[u"TaggedItemAttr"].values
         try:
             attr1, attr2 = attributes_to_dict(attr[0]), attributes_to_dict(attr[1])
+            self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
+            self.feature_vector_demo = make_similarity_feature_demo(attr1, attr2, self.tag_dict[self.category_id])
+            if self.use_essential_tag_dict:
+                pass
+            else:
+                return True
             try:
                 essential_tag_dict = self.essential_tag_dict[self.category_id]
                 # 有必要维度字典，并且没有违反必要维度法
                 if essential_dimension_trick(attr1=attr1, attr2=attr2, essential_tag_dict=essential_tag_dict):
                     debug(u"必要维度没有冲突")
-                    self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
-                    self.feature_vector_demo = make_similarity_feature_demo(
-                        attr1, attr2, self.tag_dict[self.category_id])
                     return True
                 else:
                     debug(u"和必要维度冲突")
                     self.essential_dimension_conflict = True
                     return False
-            except KeyError:
-                self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
-                self.feature_vector_demo = make_similarity_feature_demo(attr1, attr2, self.tag_dict[self.category_id])
+            except KeyError as e:
+                print u"E 30001 raise exception:{0}".format(e)
                 return True
             # self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
             # return True
         except Exception as e:
-            print u"raise exception:{0}".format(e)
+            print u"E3000 raise exception:{0}".format(e)
             return False
 
     def predict(self):
@@ -86,8 +88,8 @@ class VerifyResult(CalC):
         debug(u"两个商品的特征向量是:\n{0}\n相似度回归值为:\n{1}\n特征向量的内容:\n".format(
             self.feature_vector, self.predict_y))
         dimension_list = self.tag_dict[self.category_id].keys()
-        for i in range(len(dimension_list)):
-            debug(u"维度 {0}:{1}".format(dimension_list[i], self.feature_vector[i]))
+        # for i in range(len(dimension_list)):
+        #     debug(u"维度 {0}:{1}".format(dimension_list[i], self.feature_vector[i]))
 
     def main(self, item1_id, item2_id, category_id):
         self.get_data(item1_id=item1_id, item2_id=item2_id, category_id=category_id)
@@ -95,6 +97,7 @@ class VerifyResult(CalC):
             self.predict()
             self.show_process_and_result()
         else:
+            debug(u"build feature failed")
             self.predict_y = 0
             self.feature_vector = [0] * len(self.tag_dict[self.category_id])
 

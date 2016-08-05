@@ -50,44 +50,49 @@ def make_similarity_feature(attr1, attr2, tag_dict):
             if dimension in attr1.keys() and dimension in attr2.keys():
                 pass
             else:
-                feature.append(0.0)
+                feature.append(0.000)
                 continue
             m1 = material_string_to_dict(attr1[dimension])
             m2 = material_string_to_dict(attr2[dimension])
             mi = set(m1.keys()) & set(m2.keys())
             if len(mi) > 0:
-                material_similar_score = 0
+                material_similar_score = 0.000
                 for i in mi:
-                    material_similar_score += min(m1[i], m2[i])
-                feature.append(float(material_similar_score) / 100)
+                    material_similar_score += min(float(m1[i]), float(m2[i]))
+                feature.append(round(float(material_similar_score) / 100, 4))
             else:
-                feature.append(0.0)
-                continue
+                feature.append(0.000)
+            continue
         else:
             pass
         try:
             set(value_list)
         except TypeError as e:
             print u"tag_dict element type error, error_message={0}".format(str(e))
-            return
+            feature.append(0.000)
+            continue
         try:
             set1 = set(value_list) & set(attr1[dimension])
             set2 = set(value_list) & set(attr2[dimension])
         except KeyError:
-            feature.append(0.0)
+            feature.append(0.000)
             continue
         try:
-            feature.append(float(len(set1 & set2)) / len(set1 | set2))
+            feature.append(round(float(len(set1 & set2)) / len(set1 | set2), 4))
         except ZeroDivisionError:
-            feature.append(0.0)
-            continue
+            feature.append(0.000)
+        continue
     return feature
 
 
 def material_string_to_dict(material):
     material_dict = dict()
     for material_purity in material:
-        purity = re.findall(ur"\d+\.?\d*", material_purity)[0]
+        purity = re.findall(ur"\d+\.?\d*", material_purity)
+        if purity:
+            purity = purity[0]
+        else:
+            continue
         material = material_purity.replace(purity, u"").replace(u"%", u"")
         if u"(" in material and u")" in material:
             material = material[material.find(u"(") + len(u"("): material.find(u")")]
@@ -140,7 +145,7 @@ def construct_train_feature(raw_data, tag_dict):
         feature_vector = construct_feature(attr1=row[0], attr2=row[1], tag_dict=tag_dict)
         x_set.append(feature_vector)
         y_set.append(row[2])
-    return np.asarray(x_set), np.asarray(y_set)
+    return x_set, y_set
 
 
 def sample_balance(train_x, train_y):

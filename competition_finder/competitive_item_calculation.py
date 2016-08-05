@@ -87,9 +87,11 @@ class CalculateCompetitiveItems(object):
         # 构造训练数据
         # training_data: attr1, attr2, score
         print (u"{0} 正在构造训练数据的特征矩阵... ".format(datetime.now()))
-        self.train_x, self.train_y = construct_train_feature(raw_data=self.training_data.values.tolist(),
-                                                             tag_dict=self.tag_dict[self.category_id])
+        train_x, train_y = construct_train_feature(raw_data=self.training_data.values.tolist(),
+                                                   tag_dict=self.tag_dict[self.category_id])
         # region 用于echarts展示
+        self.train_x = np.array(train_x)
+        self.train_y = np.array(train_y)
         df_x = pd.DataFrame(self.train_x)
         df_y = pd.DataFrame(self.train_y, columns=[u"y"])
         df = pd.concat([df_x, df_y], axis=1, join_axes=[df_x.index])
