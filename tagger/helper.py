@@ -106,12 +106,11 @@ def attr_value_chunk(value):
 
 def export_excel(data, category, category_id, dir_name):
     import pandas as pd
+    # 将文件保存至指定目录
     chdir(path.join(path.dirname(path.abspath(__file__)), dir_name))
     df = pd.DataFrame(list(data), columns=[u"ItemID", u"DisplayName", u"AttrValue"])
-    writer = pd.ExcelWriter(u"{0}.xlsx".format(category), engine=u"xlsxwriter")
-    df.to_excel(
-        excel_writer=writer, sheet_name=str(category_id), encoding=u"utf-8"
-    )
+    writer = pd.ExcelWriter(u"{0}.xlsx".format(category.replace(u"/", u"")), engine=u"xlsxwriter")
+    df.to_excel(excel_writer=writer, sheet_name=str(category_id), encoding=u"utf-8")
     writer.save()
     writer.close()
     return

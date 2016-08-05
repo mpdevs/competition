@@ -2,10 +2,9 @@
 # __author__ = "John"
 import numpy as np
 import random
+import re
 from tqdm import tqdm
 from collections import OrderedDict
-from os import path, sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.debug_helper import debug
 
 
@@ -32,6 +31,10 @@ def make_similarity_feature(attr1, attr2, tag_dict):
     竞品的标签必须是一个排序字典，用于后续的训练训练模型生成
     计算步骤：
         遍历每个维度
+            特殊维度——材质成分
+                将两个商品的材质维度做成字典，数据格式为 材质: 纯度
+                    材质交集 mi = attr1.材质成分 & attr2.材质成分为空则，直接为0
+                    非空，sigma(min(attr1.mi[i], attr2.mi[i]))
             查看两个商品之间和维度词典中是否有对应的维度
                 如果有，则计算这些维度值的jaccard相似度: 交集数 / 并集数
                 否则， 直接为0
@@ -42,6 +45,26 @@ def make_similarity_feature(attr1, attr2, tag_dict):
     """
     feature = []
     for dimension, value_list in tag_dict.iteritems():
+        if dimension == u"材质成分":
+            u"""这里可以和下面的判断合并在一起, 作为效率的提升, 有时间重写一下"""
+            if dimension in attr1.keys() and dimension in attr2.keys():
+                pass
+            else:
+                feature.append(0.0)
+                continue
+            m1 = material_string_to_dict(attr1[dimension])
+            m2 = material_string_to_dict(attr2[dimension])
+            mi = set(m1.keys()) & set(m2.keys())
+            if len(mi) > 0:
+                material_similar_score = 0
+                for i in mi:
+                    material_similar_score += min(m1[i], m2[i])
+                feature.append(float(material_similar_score) / 100)
+            else:
+                feature.append(0.0)
+                continue
+        else:
+            pass
         try:
             set(value_list)
         except TypeError as e:
@@ -61,19 +84,33 @@ def make_similarity_feature(attr1, attr2, tag_dict):
     return feature
 
 
+def material_string_to_dict(material):
+    material_dict = dict()
+    for material_purity in material:
+        purity = re.findall(ur"\d+\.?\d*", material_purity)[0]
+        material = material_purity.replace(purity, u"").replace(u"%", u"")
+        if u"(" in material and u")" in material:
+            material = material[material.find(u"(") + len(u"("): material.find(u")")]
+        if u"（" in material and u"）" in material:
+            material = material[material.find(u"（") + len(u"（"): material.find(u"）")]
+        if material not in [u"其他", u"其它"]:
+            material_dict.update({material: purity})
+    return material_dict
+
+
 def attributes_to_dict(attributes):
     """
     attributes是数据库里商品已经打好的标签
     :param attributes: unicode
-    :return: OrderedDict
+    :return: OrderedDict(unicode: list(unicode))
     """
     od = OrderedDict()
     for attribute in attributes[1: -1].split(u","):
-        name_value_pair = attribute.split(u":")
-        if name_value_pair[0] in od.keys():
-            od[name_value_pair[0]].append(name_value_pair[1])
+        dimension_value_pair = attribute.split(u":")
+        if dimension_value_pair[0] in od.keys():
+            od[dimension_value_pair[0]].append(dimension_value_pair[1])
         else:
-            od[name_value_pair[0]] = [name_value_pair[1]]
+            od[dimension_value_pair[0]] = [dimension_value_pair[1]]
     return od
 
 
@@ -233,7 +270,7 @@ def essential_dimension_trick(attr1, attr2, essential_tag_dict):
             return False
 
 
-if __name__ == "__main__":
+if __name__ == u"__main__":
     from datetime import datetime
     _attr_list = [u",风格:通勤,款式品名:小背心/小吊带,图案:纯色,领型:圆领,颜色分类:花色,颜色分类:黑色,颜色分类:白色,颜色分类:深灰,颜色分类:浅灰,颜色分类:灰色,颜色分类:黄色,颜色分类:蓝色,颜色分类:绿色,颜色分类:西瓜红,颜色分类:玫红,颜色分类:红色,上市年份季节:2015年秋季,组合形式:单件,厚薄:厚,厚薄:薄,厚薄:适中,通勤:韩版,穿着方式:套头,衣长:常规,适用季节:春,适用季节:夏,适用季节:秋,适用季节:春夏,",
                   u",款式品名:卫衣/绒衫,服装款式细节:口袋,领型:半开领,服饰工艺:立体裁剪,颜色分类:紫色,颜色分类:黄色,颜色分类:酒红,颜色分类:红色,颜色分类:红黑,上市年份季节:2014年秋季,组合形式:两件套,厚薄:厚,厚薄:薄,厚薄:适中,袖长:长袖,裤长:长裤,面料:棉,面料:聚酯,衣门襟:拉链,适用年龄:35-39周岁,袖型:常规,服装版型:宽松,穿着方式:开衫,衣长:中长款,适用季节:春,适用季节:秋,"]

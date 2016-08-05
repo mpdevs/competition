@@ -35,7 +35,7 @@ class CalculateCompetitiveItems(object):
         # key=CategoryID value=CategoryName
         # CID: CNAME
         print (u"{0} 正在生成商品的标签dict... ".format(datetime.now()))
-        self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"Attrname", u"AttrValue"]])
+        self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"DisplayName", u"AttrValue"]])
         self.training_data = None
         self.train_x = None
         self.train_x_positive = dict()
@@ -54,7 +54,7 @@ class CalculateCompetitiveItems(object):
         # endregion
         # region 可选
         # 必要维度法
-        self.use_essential_tag_dict = True
+        self.use_essential_tag_dict = False
         self.essential_tag_dict = parse_essential_dimension(get_essential_dimensions(db=self.industry)) \
             if self.use_essential_tag_dict else None
         self.statistic_info = []
@@ -76,7 +76,7 @@ class CalculateCompetitiveItems(object):
         return string
     # endregion
 
-    # region 特征构造
+    # region 特征(feature)构造
     def build_train_feature(self):
         """
         按需训练
@@ -120,6 +120,8 @@ class CalculateCompetitiveItems(object):
             essential_tag_dict = self.essential_tag_dict[self.category_id]
         except KeyError:
             pass
+        except TypeError:
+            pass
         self.predict_x, self.item_pairs = construct_prediction_feature(
             customer_data=self.customer_shop_items.values,
             competitor_data=self.competitor_items.values,
@@ -127,7 +129,7 @@ class CalculateCompetitiveItems(object):
         return
     # endregion
 
-    # region 模型训练和预测#
+    # region 模型训练和预测
     def train(self):
         model = GradientBoostingRegressor()
         print (u"{0} 正在生成训练模型... ".format(datetime.now()))

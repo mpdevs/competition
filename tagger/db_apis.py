@@ -12,7 +12,7 @@ def get_tag_list(category_id):
     return pd.read_sql_query(TAG_DICT_QUERY.format(category_id), connect_db())
 
 
-def get_items_attr_data(db, table, category_id=1623, retag=u"NeedReTag = 'y'"):
+def get_items_attr_data(db, table, category_id=1623, retag=u" AND NeedReTag = 'y'"):
     """
     获取某行业某个表某个品类下面所有的商品的属性，这部分是
     :param db:

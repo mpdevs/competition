@@ -20,7 +20,7 @@ class AttrTagger(object):
         self.table = table
         self.category_dict = {int(row[0]): row[1] for row in get_categories(db=self.db, category_id_list=[])}
         self.tag_list = None
-        self.tag_df = get_tag_attribute_meta(db=self.db)
+        self.tag_df = None
         self.category_id = None
         self.items_data = None
         self.items_no_attr_data = None
@@ -51,6 +51,7 @@ class AttrTagger(object):
         用于重载时候代码复用
         :return:
         """
+        self.tag_df = get_tag_attribute_meta(db=self.db)
         self.tag_df = self.tag_df[self.tag_df.CID == self.category_id]
         tag_list = self.tag_df.DisplayName.values.tolist()
         external_tag_list = [u"品牌"]
@@ -177,8 +178,11 @@ class AttrTagger(object):
             result = []
             for color in color_list:
                 # row - 0:ColorGroup, 1:ColorName, 2:SimilarColor, 3:BlurredColor
+                row_colors = []
                 for row in self.color_list:
-                    row_colors = row[1].split(u",") + row[2].split(u",")
+                    for i in xrange(1, 3):
+                        if row[i]:
+                            row_colors += row[i]
                     if color in row_colors:
                         result.append(row[1])
                         continue
@@ -374,7 +378,10 @@ class ColorTagger(AttrTagger):
             for color in color_list:
                 # row - 0:ColorGroup, 1:ColorName, 2:SimilarColor, 3:BlurredColor
                 for row in self.color_list:
-                    row_colors = row[0].split(u",") + row[1].split(u",") + row[2].split(u",")
+                    row_colors = []
+                    for i in xrange(3):
+                        if row[i]:
+                            row_colors += row[i].split(u",")
                     if color in row_colors:
                         ret.append(row[0])
                     else:
@@ -396,15 +403,23 @@ class AllTagger(object):
         self.table = table
         return
 
-    def main(self):
-        attr_tagger = AttrTagger(db=self.db, table=self.table)
-        attr_tagger.main()
-        brand_tagger = BrandTagger(db=self.db, table=self.table)
-        brand_tagger.main()
-        material_tagger = MaterialTagger(db=self.db, table=self.table)
-        material_tagger.main()
-        color_tagger = ColorTagger(db=self.db, table=self.table)
-        color_tagger.main()
+    def main(self, **kwargs):
+        if kwargs[u"attribute"]:
+            print u"{0} {1} 开始执行AttrTagger {1}".format(datetime.now(), u"-" * 10)
+            attr_tagger = AttrTagger(db=self.db, table=self.table)
+            attr_tagger.main()
+        if kwargs[u"brand"]:
+            print u"{0} {1} 开始执行BrandTagger {1}".format(datetime.now(), u"-" * 10)
+            brand_tagger = BrandTagger(db=self.db, table=self.table)
+            brand_tagger.main()
+        if kwargs[u"material"]:
+            print u"{0} {1} 开始执行MaterialTagger {1}".format(datetime.now(), u"-" * 10)
+            material_tagger = MaterialTagger(db=self.db, table=self.table)
+            material_tagger.main()
+        if kwargs[u"color"]:
+            print u"{0} {1} 开始执行ColorTagger {1}".format(datetime.now(), u"-" * 10)
+            color_tagger = ColorTagger(db=self.db, table=self.table)
+            color_tagger.main()
 
 # endregion
 
@@ -558,5 +573,7 @@ if __name__ == u"__main__":
     # one = OneItemTagger(db=_db, table=_table)
     # one.main(item_id=_item_id)
     all_tagger = AllTagger(db=_db, table=_table)
-    all_tagger.main()
+    all_tagger.main(attribute=True, brand=False, material=False, color=False)
+
+
 
