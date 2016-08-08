@@ -5,6 +5,10 @@ import random
 import re
 from tqdm import tqdm
 from collections import OrderedDict
+import sys
+from os import path
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
 from common.debug_helper import debug
 
 
