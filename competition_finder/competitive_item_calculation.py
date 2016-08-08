@@ -1,5 +1,5 @@
 # coding: utf-8
-# __author__: "John"
+# __author__: u"John"
 """
 基于训练模型
 """
@@ -87,11 +87,10 @@ class CalculateCompetitiveItems(object):
         # 构造训练数据
         # training_data: attr1, attr2, score
         print (u"{0} 正在构造训练数据的特征矩阵... ".format(datetime.now()))
-        train_x, train_y = construct_train_feature(raw_data=self.training_data.values.tolist(),
-                                                   tag_dict=self.tag_dict[self.category_id])
+        self.train_x, self.train_y = construct_train_feature(raw_data=self.training_data.values.tolist(),
+                                                             tag_dict=self.tag_dict[self.category_id])
+
         # region 用于echarts展示
-        self.train_x = np.array(train_x)
-        self.train_y = np.array(train_y)
         df_x = pd.DataFrame(self.train_x)
         df_y = pd.DataFrame(self.train_y, columns=[u"y"])
         df = pd.concat([df_x, df_y], axis=1, join_axes=[df_x.index])
@@ -200,6 +199,7 @@ class CalculateCompetitiveItems(object):
         pickle_dump(TRAIN_X_POSITIVE_PICKLE, self.train_x_positive)
         pickle_dump(TRAIN_X_NEGATIVE_PICKLE, self.train_x_negative)
         pickle_dump(TEST_X_PICKLE, self.test_x)
+        self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"DisplayName", u"AttrValue"]])
         pickle_dump(TAG_DICT_PICKLE, self.tag_dict)
         # import pandas as pd
         # return pd.DataFrame(self.statistic_info)["rows"].sum()
@@ -213,7 +213,7 @@ class CalculateCompetitiveItems(object):
         return
     # endregion
 
-if __name__ == "__main__":
+if __name__ == u"__main__":
     c = CalculateCompetitiveItems()
     c.main()
     # result = []

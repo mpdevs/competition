@@ -1,5 +1,5 @@
 # coding: utf-8
-# __author__: "John"
+# __author__: u"John"
 from router import *
 import tornado.httpserver
 import tornado.ioloop

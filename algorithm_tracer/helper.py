@@ -1,15 +1,8 @@
 # coding: utf-8
 # __author__ = "John"
 from collections import OrderedDict
-from os import path, sys
 from pandas import DataFrame
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-from common.settings import DEBUG
-
-
-def debug(var):
-    if DEBUG:
-        print(var)
+from common.debug_helper import debug
 
 
 def make_similarity_feature(attr1, attr2, tag_dict):

@@ -98,10 +98,6 @@ if __name__ == u"__main__":
     r = get_categories()
     print u"get_categorys row count={0}".format(len(r))
 
-    print u"{0} start testing get_attribute_meta".format(datetime.now())
-    r = get_attribute_meta()
-    print u"get_attribute_meta row count={0}".format(r.values.shape[0])
-
     print u"{0} start testing get_item_attributes".format(datetime.now())
     print u"get_item_attributes row count={0}".format(r.values.shape[0])
 

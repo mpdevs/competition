@@ -6,7 +6,7 @@
     <h5>Attr: {{ si[1] }}</h5>
     <h4>TargetItem:{{ ti[0] }}</h4>
     <h5>Attr: {{ ti[1] }}</h5>
-    <h4>Feature Vector:</h4>
+    <h4>Feature Vector (demo version):</h4>
     <h5>{{ fv }}</h5>
     <h4>Score:</h4>
     <h5>{{ y }}</h5>
@@ -27,13 +27,13 @@
         <div style="width:300px; height:auto; float:left; display:inline">
             <p>SourceItem</p>
                 {% if len(si[2]) < 2 %}
-                    <a href={{ "https://item.taobao.com/item.htm?id={0}".format(si[0]) }} target="view_frame" >SourceItemUrl</a>
+                    <a href= "{{ 'https://item.taobao.com/item.htm?id={0}'.format(si[0]) }}" target="view_frame" >SourceItemUrl</a>
                 {% elif len(si[2]) > 2 %}
                     <img id="p1" src={{ si[2] }} height="200" width="200"/>
                 {% end if %}
             <p>TargetItem</p>
                 {% if len(ti[2]) < 2 %}
-                    <a href={{ "https://item.taobao.com/item.htm?id={0}".format(ti[0]) }} target="view_frame" >TargetItemUrl</a>
+                    <a href="{{ 'https://item.taobao.com/item.htm?id={0}'.format(ti[0]) }}" target="view_frame" >TargetItemUrl</a>
                 {% elif len(ti[2]) > 2 %}
                     <img id="p2" src={{ ti[2] }} height="200" width="200"/>
                 {% end if %}

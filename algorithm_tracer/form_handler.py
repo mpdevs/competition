@@ -2,9 +2,6 @@
 # __author__: "John"
 from tornado.web import RequestHandler as BaseHandler
 import textwrap
-from os import path
-import sys
-sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from algorithm_demo import VerifyResult
 
 
@@ -36,14 +33,15 @@ class AlgorithmDemoHandler(BaseHandler):
         item2_id = int(self.get_argument(u"item2_id"))
         category_id = int(self.get_argument(u"category_id"))
         vr = VerifyResult(
-            source_table=u"itemmonthlysales2015", target_table=u"itemmonthlyrelation_2015", date_range=u"2015-12-01")
+            source_table=u"TaggedItemAttr", target_table=u"itemmonthlyrelation_2015", date_range=u"2015-12-01")
         vr.main(item1_id=item1_id, item2_id=item2_id, category_id=category_id)
-        item_pair = vr.competitive_item_pair_data.values
-        source_item = item_pair[0]
-        target_item = item_pair[1]
+        source_item = vr.item1
+        target_item = vr.item2
+        print source_item[1]
+        print target_item[1]
         if vr.essential_dimension_conflict:
-            self.reder(u"demo_error.html", si=source_item, ti=target_item)
+            self.render(u"demo_error.html", si=source_item, ti=target_item)
         else:
             dimension_list = vr.tag_dict[vr.category_id].keys()
-            self.render(u"demo.html", si=source_item, ti=target_item, fv=vr.feature_vector, y=vr.predict_y,
+            self.render(u"demo.html", si=source_item, ti=target_item, fv=vr.feature_vector_demo, y=vr.predict_y,
                         li=dimension_list)

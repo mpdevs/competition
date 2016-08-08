@@ -24,7 +24,7 @@ def tag_to_dict(df):
     return tag_dict
 
 
-def make_similarity_feature(attr1, attr2, tag_dict):
+def make_similarity_feature(attr1, attr2, tag_dict, demo=False):
     """
     计算相似度的方法
     需要把两个已经转换好格式的属性以及需要用来计算竞品的标签
@@ -41,27 +41,44 @@ def make_similarity_feature(attr1, attr2, tag_dict):
     :param attr1: dict(key=unicode, value=list)
     :param attr2: dict(key=unicode, value=list)
     :param tag_dict: OrderedDict(key=unicode, value=list)
+    :param demo: boolean
     :return: list
     """
     feature = []
     for dimension, value_list in tag_dict.iteritems():
-        if dimension == u"材质成分":
-            u"""这里可以和下面的判断合并在一起, 作为效率的提升, 有时间重写一下"""
-            if dimension in attr1.keys() and dimension in attr2.keys():
+        similarity = round(float(0), 4)
+        if dimension in attr1.keys() and dimension in attr2.keys():
+            pass
+        else:
+            if demo:
                 pass
             else:
-                feature.append(0.000)
+                feature.append(similarity)
                 continue
-            m1 = material_string_to_dict(attr1[dimension])
-            m2 = material_string_to_dict(attr2[dimension])
-            mi = set(m1.keys()) & set(m2.keys())
-            if len(mi) > 0:
-                material_similar_score = 0.000
-                for i in mi:
-                    material_similar_score += min(float(m1[i]), float(m2[i]))
-                feature.append(round(float(material_similar_score) / 100, 4))
+        if dimension == u"材质成分":
+            try:
+                m1 = material_string_to_dict(attr1[dimension])
+                if len(m1) == 0:
+                    similarity -= 1
+            except KeyError:
+                similarity -= 1
+            try:
+                m2 = material_string_to_dict(attr2[dimension])
+                if len(m2) == 0:
+                    similarity -= 1
+            except KeyError:
+                similarity -= 1
+            if similarity >= 0:
+                mi = set(m1.keys()) & set(m2.keys())
+                if len(mi) > 0:
+                    material_similar_score = similarity
+                    for i in mi:
+                        material_similar_score += min(float(m1[i]), float(m2[i]))
+                    feature.append(round(float(material_similar_score) / 100, 4))
+                elif len(mi) == 0:
+                    feature.append(similarity)
             else:
-                feature.append(0.000)
+                feature.append(similarity)
             continue
         else:
             pass
@@ -69,18 +86,39 @@ def make_similarity_feature(attr1, attr2, tag_dict):
             set(value_list)
         except TypeError as e:
             print u"tag_dict element type error, error_message={0}".format(str(e))
-            feature.append(0.000)
+            feature.append(similarity)
             continue
-        try:
+        if demo:
+            try:
+                set1 = set(value_list) & set(attr1[dimension])
+                if len(set1) == 0:
+                    similarity -= 1
+                else:
+                    pass
+            except KeyError:
+                similarity -= 1
+            try:
+                set2 = set(value_list) & set(attr2[dimension])
+                if len(set2) == 0:
+                    similarity -= 1
+                else:
+                    pass
+            except KeyError:
+                similarity -= 1
+            if similarity < 0:
+                feature.append(similarity)
+            else:
+                try:
+                    feature.append(round(float(len(set1 & set2)) / len(set1 | set2), 4))
+                except ZeroDivisionError:
+                    feature.append(similarity)
+        else:
             set1 = set(value_list) & set(attr1[dimension])
             set2 = set(value_list) & set(attr2[dimension])
-        except KeyError:
-            feature.append(0.000)
-            continue
-        try:
-            feature.append(round(float(len(set1 & set2)) / len(set1 | set2), 4))
-        except ZeroDivisionError:
-            feature.append(0.000)
+            try:
+                feature.append(round(float(len(set1 & set2)) / len(set1 | set2), 4))
+            except ZeroDivisionError:
+                feature.append(similarity)
         continue
     return feature
 
@@ -119,17 +157,18 @@ def attributes_to_dict(attributes):
     return od
 
 
-def construct_feature(attr1, attr2, tag_dict):
+def construct_feature(attr1, attr2, tag_dict, demo=False):
     """
     根据品类-属性-值的字典返回两个商品之间的相似度向量
     每个维度就是属性
     :param attr1: unicode
     :param attr2: unicode
     :param tag_dict: OrderedDict
+    :param demo: boolean
     :return: list
     """
     attr1, attr2 = attributes_to_dict(attr1), attributes_to_dict(attr2)
-    return make_similarity_feature(attr1=attr1, attr2=attr2, tag_dict=tag_dict)
+    return make_similarity_feature(attr1=attr1, attr2=attr2, tag_dict=tag_dict, demo=demo)
 
 
 def construct_train_feature(raw_data, tag_dict):
@@ -145,7 +184,7 @@ def construct_train_feature(raw_data, tag_dict):
         feature_vector = construct_feature(attr1=row[0], attr2=row[1], tag_dict=tag_dict)
         x_set.append(feature_vector)
         y_set.append(row[2])
-    return x_set, y_set
+    return np.array(x_set), np.array(y_set)
 
 
 def sample_balance(train_x, train_y):
@@ -163,13 +202,14 @@ def sample_balance(train_x, train_y):
     return train_x, train_y
 
 
-def construct_prediction_feature(customer_data, competitor_data, tag_dict, essential_tag_dict):
+def construct_prediction_feature(customer_data, competitor_data, tag_dict, essential_tag_dict, demo=False):
     """
     构造预测数据特征, 维度为两个商品在所有相关维度上的相似度
     :param customer_data: DataFrame
     :param competitor_data: DataFrame
     :param tag_dict: OrderedDict
     :param essential_tag_dict: OrderedDict
+    :param demo: boolean
     :return: numpy.array, tuple(long, long)
     """
     x_set = []
@@ -190,7 +230,7 @@ def construct_prediction_feature(customer_data, competitor_data, tag_dict, essen
             if not essential_dimension_trick(attr1=attr1, attr2=attr2, essential_tag_dict=essential_tag_dict):
                 continue
             # 都没问题才纳入预测数据返回
-            feature_vector = make_similarity_feature(attr1=attr1, attr2=attr2, tag_dict=tag_dict)
+            feature_vector = make_similarity_feature(attr1=attr1, attr2=attr2, tag_dict=tag_dict, demo=demo)
             x_set.append(feature_vector)
             item_pair.append((customer_item[0], competitor_item[0]))
     return np.asarray(x_set), item_pair
@@ -277,12 +317,16 @@ def essential_dimension_trick(attr1, attr2, essential_tag_dict):
 
 if __name__ == u"__main__":
     from datetime import datetime
-    _attr_list = [u",风格:通勤,款式品名:小背心/小吊带,图案:纯色,领型:圆领,颜色分类:花色,颜色分类:黑色,颜色分类:白色,颜色分类:深灰,颜色分类:浅灰,颜色分类:灰色,颜色分类:黄色,颜色分类:蓝色,颜色分类:绿色,颜色分类:西瓜红,颜色分类:玫红,颜色分类:红色,上市年份季节:2015年秋季,组合形式:单件,厚薄:厚,厚薄:薄,厚薄:适中,通勤:韩版,穿着方式:套头,衣长:常规,适用季节:春,适用季节:夏,适用季节:秋,适用季节:春夏,",
-                  u",款式品名:卫衣/绒衫,服装款式细节:口袋,领型:半开领,服饰工艺:立体裁剪,颜色分类:紫色,颜色分类:黄色,颜色分类:酒红,颜色分类:红色,颜色分类:红黑,上市年份季节:2014年秋季,组合形式:两件套,厚薄:厚,厚薄:薄,厚薄:适中,袖长:长袖,裤长:长裤,面料:棉,面料:聚酯,衣门襟:拉链,适用年龄:35-39周岁,袖型:常规,服装版型:宽松,穿着方式:开衫,衣长:中长款,适用季节:春,适用季节:秋,"]
+    _attr_list = [u",风格:通勤,款式品名:小背心/小吊带,图案:纯色,领型:圆领,颜色分类:花色,颜色分类:黑色,颜色分类:白色,"
+                  u"颜色分类:深灰,颜色分类:浅灰,颜色分类:灰色,颜色分类:黄色,颜色分类:蓝色,颜色分类:绿色,颜色分类:西瓜红,"
+                  u"颜色分类:玫红,颜色分类:红色,上市年份季节:2015年秋季,组合形式:单件,厚薄:厚,厚薄:薄,厚薄:适中,"
+                  u"通勤:韩版,穿着方式:套头,衣长:常规,适用季节:春,适用季节:夏,适用季节:秋,适用季节:春夏,",
+                  u",款式品名:卫衣/绒衫,服装款式细节:口袋,领型:半开领,服饰工艺:立体裁剪,颜色分类:紫色,颜色分类:黄色,"
+                  u"颜色分类:酒红,颜色分类:红色,颜色分类:红黑,上市年份季节:2014年秋季,组合形式:两件套,厚薄:厚,厚薄:薄,"
+                  u"厚薄:适中,袖长:长袖,裤长:长裤,面料:棉,面料:聚酯,衣门襟:拉链,适用年龄:35-39周岁,袖型:常规,"
+                  u"服装版型:宽松,穿着方式:开衫,衣长:中长款,适用季节:春,适用季节:秋,"]
 
     print u"{0}开始测试tag_to_dict".format(datetime.now())
-    from common.mysql_helper import connect_db
-    import pandas as pd
     industry = u"mp_women_clothing"
     _cid = 50000671
     _attr_name = u"颜色分类"
@@ -301,7 +345,21 @@ if __name__ == u"__main__":
 
     print u"{0}开始测试make_similarity_feature".format(datetime.now())
     _tag_dict = {u"a": [u"我", u"你"], u"b": [u"你"], u"c": [u"他"], u"d": [u"啥"]}
-    fv = make_similarity_feature(_attr1, _attr2, _tag_dict)
+
+    from common.pickle_helper import pickle_load
+    from common.settings import *
+    _raw_tag_dict = pickle_load(TAG_DICT_PICKLE)
+
+    _raw_attr1 = u",组合形式:单件,颜色分类:灰色,颜色分类:黄色,颜色分类:红色,服装版型:直筒,年份季节:2014年冬季," \
+                 u"材质成分:山羊绒(羊绒)100%,品牌:博依格,图案:纯色,风格:百搭,款式:背带,衣长:常规,适用年龄:25-29周岁,"
+    _raw_attr2 = u",组合形式:单件,服装版型:修身,年份季节:2015年秋季," \
+                 u"材质成分:聚对苯二甲酸乙二酯(涤纶)94% 聚氨酯弹性纤维(氨纶)6%,品牌:型色缤纷,图案:纯色,风格:通勤," \
+                 u"衣长:常规,"
+    _attr1 = attributes_to_dict(_raw_attr1)
+    _attr2 = attributes_to_dict(_raw_attr2)
+    _tag_dict = _raw_tag_dict[121412004]
+    fv = make_similarity_feature(_attr1, _attr2, _tag_dict, demo=False)
+    fv = make_similarity_feature(_attr1, _attr2, _tag_dict, demo=True)
     print fv
 
     print u"{0}parse_essential_dimension".format(datetime.now())
