@@ -175,7 +175,7 @@ def construct_feature(attr1, attr2, tag_dict, demo=False):
     return make_similarity_feature(attr1=attr1, attr2=attr2, tag_dict=tag_dict, demo=demo)
 
 
-def construct_train_feature(raw_data, tag_dict):
+def construct_train_feature(raw_data, tag_dict, demo=True):
     """
     构造训练数据特征, 维度为某个属性的相似度
     :param raw_data: DataFrame
@@ -185,7 +185,7 @@ def construct_train_feature(raw_data, tag_dict):
     x_set = []
     y_set = []
     for row in tqdm(raw_data):
-        feature_vector = construct_feature(attr1=row[0], attr2=row[1], tag_dict=tag_dict)
+        feature_vector = construct_feature(attr1=row[0], attr2=row[1], tag_dict=tag_dict, demo=demo)
         x_set.append(feature_vector)
         y_set.append(row[2])
     return np.array(x_set), np.array(y_set)
