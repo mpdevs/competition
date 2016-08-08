@@ -91,8 +91,10 @@ class CalculateCompetitiveItems(object):
                                                              tag_dict=self.tag_dict[self.category_id])
 
         # region 用于echarts展示
-        df_x = pd.DataFrame(self.train_x)
-        df_y = pd.DataFrame(self.train_y, columns=[u"y"])
+        train_x_demo, train_y_demo = construct_train_feature(raw_data=self.training_data.values.tolist(),
+                                                             tag_dict=self.tag_dict[self.category_id], demo=True)
+        df_x = pd.DataFrame(train_x_demo)
+        df_y = pd.DataFrame(train_y_demo, columns=[u"y"])
         df = pd.concat([df_x, df_y], axis=1, join_axes=[df_x.index])
         self.train_x_positive[self.category_id] = df[df.y > 0.5].values
         self.train_x_negative[self.category_id] = df[df.y <= 0.5].values
