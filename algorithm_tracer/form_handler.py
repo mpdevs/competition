@@ -37,8 +37,6 @@ class AlgorithmDemoHandler(BaseHandler):
         vr.main(item1_id=item1_id, item2_id=item2_id, category_id=category_id)
         source_item = vr.item1
         target_item = vr.item2
-        print source_item[1]
-        print target_item[1]
         if vr.essential_dimension_conflict:
             self.render(u"demo_error.html", si=source_item, ti=target_item)
         else:
