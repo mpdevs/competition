@@ -178,17 +178,17 @@ class AttrTagger(object):
             result = []
             for color in color_list:
                 # row - 0:ColorGroup, 1:ColorName, 2:SimilarColor, 3:BlurredColor
-                row_colors = []
                 for row in self.color_list:
+                    row_colors = []
                     for i in xrange(1, 3):
                         if row[i]:
-                            row_colors += row[i]
+                            row_colors += row[i].split(u",")
                     if color in row_colors:
                         result.append(row[1])
                         continue
                     else:
                         pass
-                    if row[3] and color.find(row[3]) > -1:
+                    if row[3] != u"" and color.find(row[3]) > -1:
                         result.append(row[1])
                         self.none_attr_value.add((str(self.current_item_id), key, color))
                     else:
