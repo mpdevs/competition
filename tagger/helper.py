@@ -6,7 +6,7 @@ import re
 from db_apis import get_color
 
 
-def tag_setter(parsed_attr_desc_list):
+def format_tag(parsed_attr_desc_list):
     """
     把dict格式的标签转换成unicode类型
     :param parsed_attr_desc_list: list(dict)
@@ -16,7 +16,7 @@ def tag_setter(parsed_attr_desc_list):
         format_for_db = u","
         for dimension, value_list in parsed_attr_desc_list[i].iteritems():
             if value_list:
-                for value in value_list:
+                for value in list(set(value_list)):
                     format_for_db += u"{0}:{1},".format(dimension, value)
         if len(format_for_db) <= 2:
             format_for_db = u""
@@ -24,7 +24,16 @@ def tag_setter(parsed_attr_desc_list):
     return parsed_attr_desc_list
 
 
-def color_group_setter(parsed_attr_desc_list):
+def desc_maker():
+    """
+    把dict格式的标签转换成unicode类型
+    :param : list(dict)
+    :return: list(unicode)
+    """
+    return
+
+
+def format_color_group_tag(parsed_attr_desc_list):
     """
     把dict格式的标签转换成unicode类型
     :param parsed_attr_desc_list: list(unicode)
@@ -49,10 +58,10 @@ def brand_unify(brand_name, brand_list):
             if brand_name in brand:
                 for nick_name in brand[1].split(u","):
                     if unicode_decoder(nick_name) == brand_name:
-                        return brand[0]
-        return brand_name
+                        return brand[0], 0
+        return brand_name, 1
     else:
-        return brand_name
+        return brand_name, 2
 
 
 def unicode_decoder(string):

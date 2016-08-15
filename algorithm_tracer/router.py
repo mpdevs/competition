@@ -7,8 +7,6 @@ from tag_handler import *
 
 handler = [
     (ur"/", IndexHandler),
-    (ur"/reverse/(\w+)", ReverseHandler),
-    (ur"/wrap", WrapHandler),
     (ur"/demo/result", AlgorithmDemoHandler),
     (ur"/demo/form", AlgorithmDemoFormHandler),
     (ur"/chart", ChartIndexHandler),

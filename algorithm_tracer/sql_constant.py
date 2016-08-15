@@ -18,8 +18,11 @@ s.ItemMainPicUrl END AS  ItemMainPicUrl FROM (SELECT * FROM TaggedItemAttr WHERE
 GET_CATEGORY_ID_QUERY = u"SELECT CategoryID FROM {0} WHERE ItemID = {1} ORDER BY DateRange"
 
 
-GET_TAGGED_ITEM_INFO = u"""SELECT ItemAttrDesc, TaggedItemAttr, TaggedBrandName, TaggedColor, TaggedMaterial, CategoryID
-FROM TaggedItemAttr WHERE ItemID = {0} LIMIT 1;"""
+GET_TAGGED_ITEM_INFO = u"""SELECT CASE WHEN ItemAttrDesc IS NULL OR ItemAttrDesc = ''
+THEN CONCAT_WS('', REPLACE(ItemSubTitle, '，', ','), REPLACE(ItemName, '，', ',')) ELSE ItemAttrDesc END AS ItemAttrDesc
+,TaggedItemAttr, TaggedBrandName, TaggedColor, TaggedMaterial, CategoryID
+FROM TaggedItemAttr WHERE ItemID = {0} LIMIT 1;
+"""
 
 
 GET_CATEGORY_DISPLAYNAME_QUERY = u"""SELECT DisplayName, CName FROM attr_value

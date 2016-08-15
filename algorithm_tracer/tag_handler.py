@@ -13,9 +13,11 @@ class TagCheckFormHandler(BaseHandler):
 class TagCheckHandler(BaseHandler):
     def post(self, *args, **kwargs):
         item_id = int(self.get_argument(u"ItemID", 0))
-        retag = self.get_argument(u"retag", False)
+        retag = self.get_argument(u"ReTag", False)
+        table = self.get_argument(u"table", u"TaggedItemAttr")
+        db = self.get_argument(u"db", u"mp_women_clothing")
         if retag:
-            oit = OneItemTagger(db=u"mp_women_clothing", table=u"TaggedItemAttr")
+            oit = OneItemTagger(db=db, table=table)
             oit.main(item_id=item_id)
         item = get_tagged_item_info(item_id=item_id).values.tolist()[0]
         category_id = item[5]

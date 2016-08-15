@@ -1,25 +1,12 @@
 # coding: utf-8
 # __author__: "John"
 from tornado.web import RequestHandler as BaseHandler
-import textwrap
 from algorithm_demo import VerifyResult
 
 
 class IndexHandler(BaseHandler):
     def get(self):
         self.render(u"index.html")
-
-
-class ReverseHandler(BaseHandler):
-    def get(self, word):
-        self.write(word[::-1])
-
-
-class WrapHandler(BaseHandler):
-    def post(self):
-        text = self.get_argument(u"text")
-        width = self.get_argument(u"width", 40)
-        self.write(textwrap.fill(text, int(width)))
 
 
 class AlgorithmDemoFormHandler(BaseHandler):
@@ -41,5 +28,6 @@ class AlgorithmDemoHandler(BaseHandler):
             self.render(u"demo_error.html", si=source_item, ti=target_item)
         else:
             dimension_list = vr.tag_dict[vr.category_id].keys()
-            self.render(u"demo.html", si=source_item, ti=target_item, fv=vr.feature_vector_demo, y=vr.predict_y,
+            print dimension_list
+            self.render(u"demo_result.html", si=source_item, ti=target_item, fv=vr.feature_vector_demo, y=vr.predict_y,
                         li=dimension_list)
