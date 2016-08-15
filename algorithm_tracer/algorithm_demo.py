@@ -32,7 +32,7 @@ class VerifyResult(CalC):
             db=self.industry, source_table=self.source_table, item1_id=item1_id, item2_id=item2_id, 
             date_range=self.date_range)
         # 如果竞品对能在source_table找到，则就用该表的信息
-        if len(self.competitive_item_pair_data.values) >= 2:
+        if len(self.competitive_item_pair_data.values.tolist()) >= 2:
             self.category_id = self.competitive_item_pair_data.CategoryID.values[0]
         # 否则去训练数据的表获取
         else:
@@ -45,7 +45,7 @@ class VerifyResult(CalC):
                 self.essential_tag_dict = None
 
     def build_feature(self):
-        attr = self.competitive_item_pair_data.TaggedItemAttr.values
+        attr = self.competitive_item_pair_data.TaggedItemAttr.values.tolist()
         try:
             attr1, attr2 = attributes_to_dict(attr[0]), attributes_to_dict(attr[1])
             self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
@@ -79,6 +79,9 @@ class VerifyResult(CalC):
     def show_process_and_result(self):
         debug(u"{0} 开始数据比较...".format(datetime.now()))
         items = self.competitive_item_pair_data.values
+        print len(items)
+        for i in items:
+            print i
         self.item1, self.item2 = items[0], items[1]
         if self.pair_type == u"predict":
             debug(u"商品1的信息:\nid={0}\n标签={1}\n价格={2}\n品类={3}\n日期={4}\n".format(

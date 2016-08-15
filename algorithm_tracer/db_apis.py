@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime
 from sql_constant import *
 from common.mysql_helper import connect_db
+from common.debug_helper import debug
 
 
 def get_competitive_item_pair_info(item1_id, item2_id, db=u"mp_women_clothing", source_table=u"itemmonthlysales2015",
@@ -12,6 +13,7 @@ def get_competitive_item_pair_info(item1_id, item2_id, db=u"mp_women_clothing", 
         date_range_filter = u"AND DateRange = '{0}'".format(date_range)
     else:
         date_range_filter = u""
+    debug(PREDICT_PAIR_INFO_QUERY.format(source_table, item1_id, item2_id, date_range_filter))
     return pd.read_sql_query(PREDICT_PAIR_INFO_QUERY.format(
         source_table, item1_id, item2_id, date_range_filter), connect_db(db))
 
