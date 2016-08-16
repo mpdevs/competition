@@ -24,7 +24,7 @@ class TagCheckHandler(BaseHandler):
         attr_dict = get_category_displayname(category_id=category_id).values.tolist()
         item.append(attr_dict[0][1])
         displayname_list = [u"".join(i[0]) for i in attr_dict]
-        self.render(u"tag_check.html", item=item, displayname_list=displayname_list)
+        self.render(u"tag_check.html", item=item, displayname_list=displayname_list, item_id=item_id)
 
 
 class RetagFormHandler(BaseHandler):
