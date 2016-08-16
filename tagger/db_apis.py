@@ -247,7 +247,7 @@ if __name__ == u"__main__":
     print u"{0} start testing get_item_no_attr_data".format(datetime.now())
     r = get_item_no_attr_data(db=_industry, table=_table, item_id=526270140664)
     print u"get_item_no_attr_data row count={0}".format(len(r))
-    # make_ambiguous_attr_value()
+    make_ambiguous_attr_value()
     print u"{0} start testing get_ambiguous_attr_value_dict".format(datetime.now())
     r = get_ambiguous_attr_value(category_id=_category_id)
     print u"get_ambiguous_attr_value_dict row count={0}".format(len(r))
