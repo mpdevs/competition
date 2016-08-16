@@ -91,3 +91,26 @@ h1, h2, h3, h4, h5, h6, p, input {
 #fv-expand li {
   display: block;
 }
+
+.chart-picture {
+    width: 600px;
+    height: 400px;
+}
+
+.chart {
+    width: 600px;
+    height: 450px;
+    display: inline-block;
+}
+
+#train-positive {
+    background-color: red;
+}
+
+#train-negative {
+    background-color: blue;
+}
+
+#test {
+    background-color: green;
+}

@@ -2,45 +2,103 @@
 {% block title %}
 <title>竟品计算</title>
 {% end %}
+{% block js-link %}
+<script src="{{ static_url ('js/echarts.js') }}"></script>
+<script type="text/javascript">
+window.onload=function(){
+  var theSelect=document.getElementsByName("category_id");
+  var theForm=document.getElementsByName("category_get");
+  theSelect[0].onchange=function(){
+     theForm[0].submit()
+  }
+}
+</script>
+{% end %}
 {% block main %}
-<div class="main-content">
-    <h2>竟品计算</h2>
-    <h4>SourceItem:{{ si[0] }}</h4>
-    <h5>Attr: {{ si[1] }}</h5>
-    <h4>TargetItem:{{ ti[0] }}</h4>
-    <h5>Attr: {{ ti[1] }}</h5>
-    <h4>Feature Vector (demo version):</h4>
-    <h5>{{ fv }}</h5>
-    <h4>Score:</h4>
-    <h5>{{ y }}</h5>
-    <div>
-        <div style="width:50%; display:inline">
-            <ul>
-            {% for i in xrange(len(li)) %}
-                {% if fv[i] < 0 %}
-                    <li>{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
-                {% elif fv[i] > 0 %}
-                    <li style="color:red">{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
-                {% elif fv[i] == 0 %}
-                    <li style="color:blue">{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
-                {% end if %}
-            {% end %}
-            </ul>
-        </div>
-        <div style="width:50%; display:inline">
-            <p>SourceItem</p>
-                {% if len(si[2]) < 2 %}
-                    <a href= "{{ 'https://item.taobao.com/item.htm?id={0}'.format(si[0]) }}" target="view_frame" >SourceItemUrl</a>
-                {% elif len(si[2]) > 2 %}
-                    <img id="p1" src={{ si[2] }} height="200" width="200"/>
-                {% end if %}
-            <p>TargetItem</p>
-                {% if len(ti[2]) < 2 %}
-                    <a href="{{ 'https://item.taobao.com/item.htm?id={0}'.format(ti[0]) }}" target="view_frame" >TargetItemUrl</a>
-                {% elif len(ti[2]) > 2 %}
-                    <img id="p2" src={{ ti[2] }} height="200" width="200"/>
-                {% end if %}
-        </div>
+    <div id="filter">
+        <form action="http://192.168.1.139:8280/chart/fvd" method="GET" name="category_get">
+            <select name="category_id">
+                <option>品类选择</option>
+                {% for c in category %}<option value="{{ c[0] }}">{{ c[1] }}</option>
+                {% end for %}
+            </select>
+
+        </form>
     </div>
+    <div class="chart">
+        <h2>训练正例数据特征值分布</h2>
+        <div id="train-positive" class="chart-picture"></div>
+    </div>
+    <div class="chart">
+        <h2>训练负例数据特征值分布</h2>
+        <div id="train-negative" class="chart-picture"></div>
+    </div>
+    <div class="chart">
+        <h2>预测数据特征值分布</h2>
+        <div id="test" class="chart-picture"></div>
+    </div>
+<script type="text/javascript">
+    var chart = echarts.init(document.getElementById("train-positive"));
+    var option = new Object();
+    var legend_data = [];
+    {% for i in train_x_positive_data[u"legend_data"] %}
+    legend_data.push("{{ i.encode("utf-8") }}"); {% end %}
+    option.legend = {"data": legend_data, "selectedMode": "single"};
+    option.xAxis = {"type": "value", "scale": "true"};
+    option.yAxis = {"type": "value", "scale": "true"};
+    var series_data = [];
+    {% for i in train_x_positive_data[u"legend_data"] %}
+    series_data.push(
+    {
+            "name": "{{ i }}",
+            "type": "scatter",
+            "data": {{ train_x_positive_data[u"series_data"][i] }}
+    })
+    {% end for %}
+    option.series = series_data;
+    chart.setOption(option);
+</script>
+<script>
+    var chart = echarts.init(document.getElementById("train-negative"));
+    var option = new Object();
+    var legend_data = [];
+    {% for i in train_x_negative_data[u"legend_data"] %}
+    legend_data.push("{{ i.encode("utf-8") }}"); {% end %}
+    option.legend = {"data": legend_data, "selectedMode": "single"};
+    option.xAxis = {"type": "value", "scale": "true"};
+    option.yAxis = {"type": "value", "scale": "true"};
+    var series_data = [];
+    {% for i in train_x_negative_data[u"legend_data"] %}
+    series_data.push(
+    {
+            "name": "{{ i }}",
+            "type": "scatter",
+            "data": {{ train_x_negative_data[u"series_data"][i] }}
+    })
+    {% end for %}
+    option.series = series_data;
+    chart.setOption(option);
+</script>
+<script>
+    var chart = echarts.init(document.getElementById("test"));
+    var option = new Object();
+    var legend_data = [];
+    {% for i in test_x_data[u"legend_data"] %}
+    legend_data.push("{{ i.encode("utf-8") }}"); {% end %}
+    option.legend = {"data": legend_data, "selectedMode": "single"};
+    option.xAxis = {"type": "value", "scale": "true"};
+    option.yAxis = {"type": "value", "scale": "true"};
+    var series_data = [];
+    {% for i in test_x_data[u"legend_data"] %}
+    series_data.push(
+    {
+            "name": "{{ i }}",
+            "type": "scatter",
+            "data": {{ test_x_data[u"series_data"][i] }}
+    })
+    {% end for %}
+    option.series = series_data;
+    chart.setOption(option);
+</script>
 {% end %}
 

@@ -39,6 +39,7 @@ class FeatureVectorDistributionHandler(ChartIndexHandler):
         self.available_category = list(self.available_category & set(self.test_x_positive.keys()))
         # for category in self.available_category:
         #     print category
+        print type(self.tag_dict)
         self.category = get_categories(db=u"mp_women_clothing", category_id_list=self.available_category)
         self.category_id = None
 

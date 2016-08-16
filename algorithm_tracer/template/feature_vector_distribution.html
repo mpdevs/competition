@@ -1,5 +1,9 @@
-{% extends "chart_base.html" %}
-{% block script-head %}
+{% extends "index.html" %}
+{% block title %}
+<title>竟品计算</title>
+{% end %}
+{% block js-link %}
+<script src="{{ static_url ('js/echarts.js') }}"></script>
 <script type="text/javascript">
 window.onload=function(){
   var theSelect=document.getElementsByName("category_id");
@@ -10,14 +14,7 @@ window.onload=function(){
 }
 </script>
 {% end %}
-{% block title %}
-宏原特征分布图
-{% end %}
-{% block css-link %}
-<link rel="stylesheet" type="text/css" href="{{ static_url ('css/feature_vector_distribution.css') }}">
-{% end %}
-{% block body %}
-<body>
+{% block main %}
     <div id="filter">
         <form action="http://192.168.1.139:8280/chart/fvd" method="GET" name="category_get">
             <select name="category_id">
@@ -103,5 +100,5 @@ window.onload=function(){
     option.series = series_data;
     chart.setOption(option);
 </script>
-</body>
 {% end %}
+

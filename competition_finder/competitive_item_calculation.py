@@ -201,7 +201,7 @@ class CalculateCompetitiveItems(object):
         pickle_dump(TRAIN_X_POSITIVE_PICKLE, self.train_x_positive)
         pickle_dump(TRAIN_X_NEGATIVE_PICKLE, self.train_x_negative)
         pickle_dump(TEST_X_PICKLE, self.test_x)
-        self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"DisplayName", u"AttrValue"]])
+        # self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"DisplayName", u"AttrValue"]])
         pickle_dump(TAG_DICT_PICKLE, self.tag_dict)
         # import pandas as pd
         # return pd.DataFrame(self.statistic_info)["rows"].sum()
