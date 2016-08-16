@@ -3,11 +3,15 @@
 from sql_constant import *
 import pandas as pd
 from math import ceil
+import sys
+from os import path
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from datetime import datetime
 from common.mysql_helper import connect_db, MySQLDBPackage
 from common.debug_helper import debug
 from common.pickle_helper import *
 from common.settings import NAME_ATTRIBUTE_PICKLE
+
 
 
 def get_tag_list(category_id):
