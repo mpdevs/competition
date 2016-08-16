@@ -1,16 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>宏原标签生成</title>
-</head>
-<body>
-    <h1>标签生成</h1>
+{% extends "index.html" %}
+{% block title %}
+<title>标签生成</title>
+{% end %}
+{% block main %}
+<div class="main-content">
+    <h2>标签生成</h2>
     <form method="post" action="/tag/result">
         <p>ItemID<input type="text" name="ItemID"></p>
         <input type="submit">
-        <input style="visibility: hidden" name="ReTag" value=True>
+        <input id="retag" name="ReTag" value=True>
     </form>
-
-</body>
-</html>
+</div>
+{% end %}

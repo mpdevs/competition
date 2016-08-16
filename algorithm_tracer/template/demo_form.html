@@ -1,12 +1,15 @@
-{% extends "demo_base.html" %}
-<body>
-    {% block body %}
-    <h1>请在下面填写两个商品的ID</h1>
+{% extends "index.html" %}
+{% block title %}
+<title>竟品计算</title>
+{% end %}
+{% block main %}
+<div class="main-content">
+    <h2>竞品计算</h2>
     <form method="post" action="/demo/result">
         <p>SourceItemID<input type="text" name="item1_id"></p>
         <p>TargetItemID<input type="text" name="item2_id"></p>
         <p>CategoryID<input type="text" name="category_id"></p>
         <input type="submit">
     </form>
-    {% end %}
-</body>
+</div>
+{% end %}

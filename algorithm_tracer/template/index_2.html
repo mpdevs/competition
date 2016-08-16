@@ -1,0 +1,46 @@
+{% extends "index.html" %}
+{% block title %}
+<title>竟品计算</title>
+{% end %}
+{% block main %}
+<div class="main-content">
+    <h2>竟品计算</h2>
+    <h4>SourceItem:{{ si[0] }}</h4>
+    <h5>Attr: {{ si[1] }}</h5>
+    <h4>TargetItem:{{ ti[0] }}</h4>
+    <h5>Attr: {{ ti[1] }}</h5>
+    <h4>Feature Vector (demo version):</h4>
+    <h5>{{ fv }}</h5>
+    <h4>Score:</h4>
+    <h5>{{ y }}</h5>
+    <div>
+        <div style="width:50%; display:inline">
+            <ul>
+            {% for i in xrange(len(li)) %}
+                {% if fv[i] < 0 %}
+                    <li>{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+                {% elif fv[i] > 0 %}
+                    <li style="color:red">{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+                {% elif fv[i] == 0 %}
+                    <li style="color:blue">{{ u"维度<{0}>=<{1}>".format(li[i], fv[i]) }}</li>
+                {% end if %}
+            {% end %}
+            </ul>
+        </div>
+        <div style="width:50%; display:inline">
+            <p>SourceItem</p>
+                {% if len(si[2]) < 2 %}
+                    <a href= "{{ 'https://item.taobao.com/item.htm?id={0}'.format(si[0]) }}" target="view_frame" >SourceItemUrl</a>
+                {% elif len(si[2]) > 2 %}
+                    <img id="p1" src={{ si[2] }} height="200" width="200"/>
+                {% end if %}
+            <p>TargetItem</p>
+                {% if len(ti[2]) < 2 %}
+                    <a href="{{ 'https://item.taobao.com/item.htm?id={0}'.format(ti[0]) }}" target="view_frame" >TargetItemUrl</a>
+                {% elif len(ti[2]) > 2 %}
+                    <img id="p2" src={{ ti[2] }} height="200" width="200"/>
+                {% end if %}
+        </div>
+    </div>
+{% end %}
+

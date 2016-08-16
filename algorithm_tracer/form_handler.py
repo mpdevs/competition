@@ -8,6 +8,9 @@ class IndexHandler(BaseHandler):
     def get(self):
         self.render(u"index.html")
 
+class Index2Handler(BaseHandler):
+    def get(self):
+        self.render(u"index_2.html")
 
 class AlgorithmDemoFormHandler(BaseHandler):
     def get(self):

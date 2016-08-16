@@ -1,11 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>宏原标签检验</title>
-</head>
-<body>
-    <h1>标签检验</h1>
+{% extends "index.html" %}
+{% block title %}
+<title>标签检验</title>
+{% end %}
+{% block main %}
+<div class="main-content">
+    <h2>标签检验</h2>
     <p> ItemAttrDesc: {{ item[0] }}</p>
     <p> TaggedItemAttr: {{ item[1] }}</p>
     <p> TaggedBrandName: {{ item[2] }}</p>
@@ -13,13 +12,11 @@
     <p> TaggedMaterial: {{ item[4] }}</p>
     <p> CategoryID: {{ item[5] }}</p>
     <p> CategoryName: {{ item[6] }}</p>
+    <h2>维度列表</h2>
     <ul>
         {% for i in displayname_list %}
             <li>{{ i }}</li>
         {% end for %}
     </ul>
-    <div style="width:300px; height:auto; float:left; display:clear">
-        <input type="button" name="Submit" value="返回" onclick="javascript:history.back(1)" style="display: clear">
-    </div>
-</body>
-</html>
+</div>
+{% end %}

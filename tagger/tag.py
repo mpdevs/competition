@@ -8,6 +8,7 @@ from db_apis import *
 from helper import *
 from os import makedirs
 from common.db_apis import *
+from common.settings import *
 
 
 # region TaggedItemAttr字段打标签
@@ -127,11 +128,11 @@ class AttrTagger(object):
         """
         # 0: ItemID, 1: CategoryID, 2: Attribute, 3: HasDescription
         print u"{0} 正在转换品类<{1}>条数据的格式...".format(datetime.now(), self.category_id)
-        for row in self.items_attr_list:
-            self.current_item_id = row[0]
-            self.current_item_attr = row[2]
+        for line in self.items_attr_list:
+            self.current_item_id = line[0]
+            self.current_item_attr = line[2]
             self.parsed_item = dict()
-            if row[3] == u"y":  # 有商品描述
+            if line[3] == u"y":  # 有商品描述
                 self.attr_desc_parser()
             else:  # 没有商品描述，标题字段
                 self.name_parser()
@@ -154,28 +155,22 @@ class AttrTagger(object):
                 self.current_item_attr = self.current_item_attr[0:-1]
         except IndexError as e:
             self.error_handler(code=u"T-000001", message=e)
-        attr_desc = self.current_item_attr.split(u",")
-        for dimension_value in attr_desc:
+        for dimension_value in self.current_item_attr.split(u","):
             key_pair = dimension_value.split(u":")
             try:
                 key = unicode_decoder(key_pair[0])
-                value = unicode_decoder(key_pair[1])
                 # 匹配不到的关键词就不需要
                 if not is_tag(key, self.dimension_list):
                     continue
-                value = self.tag_value_process(key, strip(value))
+                value = self.tag_value_process(key, strip(unicode_decoder(key_pair[1])))
                 # 通用维度值处理的时候如果找不到维度值，该维度就不能算作标签
                 if not value:
                     continue
-                value = attr_value_chunk(value)
             except IndexError as e:
                 self.error_handler(code=u"T-000002", message=e)
                 continue
             try:
-                if key in self.parsed_item .keys():
-                    self.parsed_item[key].append(value)
-                else:
-                    self.parsed_item[key] = value
+                self.parsed_item_chunk(key=key, value=value)
             except KeyError as e:
                 self.error_handler(code=u"T-000003", message=e)
                 continue
@@ -313,6 +308,8 @@ class AttrTagger(object):
         :return:
         """
         print u"{0} 正在生成<{1}>条入库数据".format(datetime.now(), len(self.tagged_items_attr_list))
+        pickle_dump(file_name=TAGGED_ITEMS_ATTR_LIST,
+                    dump_object=zip(self.tagged_items_attr_list, self.processed_item_id_list))
         self.items_attr_list = format_tag(self.tagged_items_attr_list)
         return
     # endregion
@@ -334,7 +331,14 @@ class AttrTagger(object):
     # region Chunk
     def parsed_item_chunk(self, key, value):
         if key in self.parsed_item.keys():
-            self.parsed_item[key].append(value)
+            if isinstance(value, list):
+                self.parsed_item[key] += value
+            elif isinstance(value, unicode):
+                self.parsed_item[key].append(value)
+            elif isinstance(value, str):
+                self.parsed_item[key].append(value)
+            else:
+                self.error_handler(code=u"T-000005", message=u"value type error, please check parser")
         else:
             self.parsed_item[key] = attr_value_chunk(value)
         return
@@ -352,26 +356,28 @@ class AttrTagger(object):
 
     # region 异常处理中心
     def error_handler(self, code, message):
-        self.error_list.append((self.current_item_id, code, unicode(message)))
+        self.error_list.append((str(self.current_item_id), code, unicode(message)))
         return
     # endregion
 
     # region 分析模块
     def analyzer(self):
-        dir_name = datetime.now().strftime(u"%Y%m%d%H%M%S")
-        dir_path = path.join(path.dirname(path.abspath(__file__)), dir_name)
-        makedirs(dir_path)
+        # dir_name = datetime.now().strftime(u"%Y%m%d%H%M%S")
+        dir_name = self.category_dict[self.category_id].replace(u"/", u"")
+        dir_path = path.join(path.join(path.dirname(path.abspath(__file__)), u"attribute_analyze"), dir_name)
+        if not path.exists(dir_path):
+            makedirs(dir_path)
         # 新维度值导出
         if len(self.potential_new_attr_value_list) > 0:
             export_excel(
-                data=self.potential_new_attr_value_list, category=self.category_dict[self.category_id],
-                category_id=self.category_id, dir_name=dir_name
+                data=self.potential_new_attr_value_list, file_name=datetime.now().strftime(u"%Y%m%d%H%M%S"),
+                sheet_name=self.category_dict[self.category_id].replace(u"/", u""), dir_path=dir_path
             )
         # 异常导出
         if len(self.error_list) > 0:
             export_excel(
-                data=self.error_list, category=u"{0}_error_list".format(self.category_dict[self.category_id]),
-                category_id=self.category_id, dir_name=dir_name
+                data=self.error_list, file_name=u"{0}_error_list".format(datetime.now().strftime(u"%Y%m%d%H%M%S")),
+                sheet_name=self.category_dict[self.category_id].replace(u"/", u""), dir_path=dir_path
             )
         return
     # endregion
@@ -657,10 +663,14 @@ class OneItemTagger(object):
 
 
 if __name__ == u"__main__":
+    from tqdm import tqdm
     _db = u"mp_women_clothing"
     _table = u"TaggedItemAttr"
     _item_id = 525316560097
-    _category_id = 1623
+    # _category_id = 1623
+    for _category_id in tqdm([int(row[0]) for row in get_categories(db=_db, category_id_list=[])]):
+        at = AttrTagger(db=_db, table=_table)
+        at.main(category_id=_category_id)
     # at = AttrTagger(db=_db, table=_table)
     # at.main(category_id=_category_id)
     # bt = BrandTagger(db=_db, table=_table)
@@ -675,8 +685,8 @@ if __name__ == u"__main__":
     # oc.main(item_id=_item_id)
     # one = OneItemTagger(db=_db, table=_table)
     # one.main(item_id=_item_id)
-    oit = OneItemAttrTagger(db=_db, table=_table)
-    oit.main(item_id=_item_id)
+    # oit = OneItemAttrTagger(db=_db, table=_table)
+    # oit.main(item_id=_item_id)
     # all_tagger = AllTagger(db=_db, table=_table)
     # all_tagger.main(attribute=True, brand=False, material=False, color=False)
 

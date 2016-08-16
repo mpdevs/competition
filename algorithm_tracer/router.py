@@ -14,6 +14,7 @@ handler = [
     (ur"/tag/form", TagCheckFormHandler),
     (ur"/tag/result", TagCheckHandler),
     (ur"/retag/form", RetagFormHandler),
+    (ur"/2", Index2Handler),
 ]
 
 template_path = path.join(path.dirname(__file__), u"template")

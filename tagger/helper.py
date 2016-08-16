@@ -1,6 +1,6 @@
 # coding: utf-8
 # __author__ = "John"
-from os import path, chdir
+from os import chdir
 import jieba
 import re
 from db_apis import get_color
@@ -113,13 +113,13 @@ def attr_value_chunk(value):
     return value
 
 
-def export_excel(data, category, category_id, dir_name):
+def export_excel(data, file_name, sheet_name, dir_path):
     import pandas as pd
     # 将文件保存至指定目录
-    chdir(path.join(path.dirname(path.abspath(__file__)), dir_name))
+    chdir(dir_path)
     df = pd.DataFrame(list(data), columns=[u"ItemID", u"DisplayName", u"AttrValue"])
-    writer = pd.ExcelWriter(u"{0}.xlsx".format(category.replace(u"/", u"")), engine=u"xlsxwriter")
-    df.to_excel(excel_writer=writer, sheet_name=str(category_id), encoding=u"utf-8")
+    writer = pd.ExcelWriter(u"{0}.xlsx".format(file_name.replace(u"/", u"")), engine=u"xlsxwriter")
+    df.to_excel(excel_writer=writer, sheet_name=sheet_name, encoding=u"utf-8")
     writer.save()
     writer.close()
     return
@@ -172,7 +172,27 @@ def color_cut(string):
 
 
 if __name__ == u"__main__":
-    generate_color_dict()
-    s = u"酒红色（三件套）蓝色（三件套）浅灰色（三件套）"
-    for c in color_cut(s):
-        print c
+    # generate_color_dict()
+    # s = u"酒红色（三件套）蓝色（三件套）浅灰色（三件套）"
+    # for c in color_cut(s):
+    #     print c
+    # from common.settings import TAGGED_ITEMS_ATTR_LIST
+    # from common.pickle_helper import pickle_load
+    # tagged_items_attr_list = pickle_load(TAGGED_ITEMS_ATTR_LIST)
+    # for i, l in enumerate(tagged_items_attr_list):
+    #     item_id = l[1]
+    #     dict_list = [l[0]]
+    #     try:
+    #         format_tag(dict_list)
+    #     except Exception:
+    #         print item_id, dict_list
+    #         break
+    from pandas import DataFrame
+    _data = [(u"row[1,1]", u"row[1,2]", u"[1,3]"),
+             (u"row[2,1]", u"row[2,2]", u"[2,3]"),
+             (u"row[3,1]", u"row[3,2]", u"[3,3]")]
+    _file_name = u"test_file"
+    _sheet_name = u"test_sheet"
+    _dir_path = ur"D:\WorkSpace\MarcPoint\mppreprocess\tagger\attribute_analyze\中老年女装"
+    export_excel(data=_data, file_name=_file_name, sheet_name=_sheet_name, dir_path=_dir_path)
+
