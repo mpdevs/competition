@@ -22,3 +22,18 @@ def get_categories(db=u"mp_women_clothing", category_id_list=[1623, 121412004, 1
     debug(CATEGORY_QUERY.format(db, category_filter))
     return pd.read_sql_query(CATEGORY_QUERY.format(db, category_filter), connect_db()).values
 
+
+def get_date_ranges_list(db, table):
+    debug(GET_DATE_RANGES_QUERY.format(table))
+    df = pd.read_sql_query(GET_DATE_RANGES_QUERY.format(table), connect_db(db))
+    return [line[0] for line in df.values.tolist()]
+
+
+if __name__ == u"__main__":
+    _db = u"mp_women_clothing"
+    _table = u"TaggedItemAttr"
+    r = get_date_ranges_list(db=_db, table=_table)
+    for i in r:
+        print i
+
+

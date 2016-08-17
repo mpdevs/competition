@@ -12,3 +12,6 @@ CATEGORY_QUERY = u"""SELECT DISTINCT c.CategoryID, c.CategoryName, c.CategoryDes
 FROM mp_portal.category c JOIN mp_portal.industry i ON c.IndustryID = i.IndustryID WHERE i.DBName = '{0}' {1}
 AND c.IsBottom = 'y';"""
 
+
+GET_DATE_RANGES_QUERY = u"SELECT CAST(DateRange AS CHAR) AS DateRange FROM (SELECT DISTINCT DateRange FROM {0})t;"
+

@@ -94,12 +94,6 @@ if __name__ == u"__main__":
     _shop_id = 66098091
     _date_range = u"2015-12-01"
     _category_id = 1623
-    print u"{0} start testing get_categorys".format(datetime.now())
-    r = get_categories()
-    print u"get_categorys row count={0}".format(len(r))
-
-    print u"{0} start testing get_item_attributes".format(datetime.now())
-    print u"get_item_attributes row count={0}".format(r.values.shape[0])
 
     print u"{0} start testing get_training_data".format(datetime.now())
     r = get_training_data(1623)
