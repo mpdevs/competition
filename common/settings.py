@@ -15,7 +15,7 @@ TAGGED_ITEMS_ATTR_LIST = path.join(PICKLE_FILE_PATH, u"tagged_items_attr_list")
 
 
 DEBUG = False
-INFO = True
+INFO = False
 WARNING = True
 ERROR = True
 FATAL = True

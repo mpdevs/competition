@@ -103,18 +103,18 @@ class AttrTagger(object):
         self.make_tag_list()
         self.processed_item_id_list = []
         self.tagged_items_attr_list = []
-        print u"{0} 开始获取品类<{1}>的数据...".format(datetime.now(), self.category_id)
+        info(u"{0} 开始获取品类<{1}>的数据...".format(datetime.now(), self.category_id))
         self.items_attr_list = get_items_attr(
             db=self.db, table=self.table, category_id=self.category_id, date_range=self.date_range,
             incremental=self.incremental
         ).values.tolist()
-        print u"{0} 品类<{1}>的数据获取完成一共<{2}>条数据...".format(
-            datetime.now(), self.category_id, len(self.items_attr_list))
+        info(u"{0} 品类<{1}>的数据获取完成一共<{2}>条数据...".format(
+            datetime.now(), self.category_id, len(self.items_attr_list)))
         return
 
     def get_item_data(self):
         self.make_tag_list()
-        print u"{0} 开始获取品类<{1}>的数据...".format(datetime.now(), self.category_id)
+        info(u"{0} 开始获取品类<{1}>的数据...".format(datetime.now(), self.category_id))
         self.items_attr_list = get_item_attr(db=self.db, table=self.table, item_id=self.item_id).values.tolist()
         return
     # endregion
@@ -127,7 +127,7 @@ class AttrTagger(object):
         :return:
         """
         # 0: ItemID, 1: CategoryID, 2: Attribute, 3: HasDescription
-        print u"{0} 正在转换品类<{1}>条数据的格式...".format(datetime.now(), self.category_id)
+        info(u"{0} 正在转换品类<{1}>条数据的格式...".format(datetime.now(), self.category_id))
         for line in self.items_attr_list:
             self.current_item_id = line[0]
             self.current_item_attr = line[2]
@@ -307,7 +307,7 @@ class AttrTagger(object):
         5. 格式化
         :return:
         """
-        print u"{0} 正在生成<{1}>条入库数据".format(datetime.now(), len(self.tagged_items_attr_list))
+        info(u"{0} 正在生成<{1}>条入库数据".format(datetime.now(), len(self.tagged_items_attr_list)))
         pickle_dump(file_name=TAGGED_ITEMS_ATTR_LIST,
                     dump_object=zip(self.tagged_items_attr_list, self.processed_item_id_list))
         self.items_attr_list = format_tag(self.tagged_items_attr_list)
@@ -322,7 +322,7 @@ class AttrTagger(object):
         指定更新列，需要重载
         :return:
         """
-        print u"{0} 正在将品类<{1}>的标签写入数据库".format(datetime.now(), self.category_id)
+        info(u"{0} 正在将品类<{1}>的标签写入数据库".format(datetime.now(), self.category_id))
         update_tag(db=self.db, table=self.table, column_name=self.tag_column,
                    args=zip(self.items_attr_list, self.processed_item_id_list))
         return
@@ -399,7 +399,7 @@ class AttrTagger(object):
             self.color_key_list = [u"颜色", u"颜色分类", u"主要颜色"]
         self.get_data()
         if len(self.items_attr_list) == 0:
-            print u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id)
+            info(u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id))
             return
         self.process_data()
         self.format_tagged_item()
@@ -481,7 +481,7 @@ class ColorTagger(AttrTagger):
         return
 
     def format_tagged_item(self):
-        print u"{0} 正在生成<{1}>条入库数据".format(datetime.now(), len(self.tagged_items_attr_list))
+        info(u"{0} 正在生成<{1}>条入库数据".format(datetime.now(), len(self.tagged_items_attr_list)))
         self.items_attr_list = format_color_group_tag(self.tagged_items_attr_list)
         return
 
@@ -531,19 +531,19 @@ class AllTagger(object):
 
     def main(self, **kwargs):
         if kwargs[u"attribute"]:
-            print u"{0} {1} 开始执行AttrTagger {1}".format(datetime.now(), u"-" * 10)
+            info(u"{0} {1} 开始执行AttrTagger {1}".format(datetime.now(), u"-" * 10))
             attr_tagger = AttrTagger(db=self.db, table=self.table)
             attr_tagger.main(category_id=self.category_id, date_range=self.date_range)
         if kwargs[u"brand"]:
-            print u"{0} {1} 开始执行BrandTagger {1}".format(datetime.now(), u"-" * 10)
+            info(u"{0} {1} 开始执行BrandTagger {1}".format(datetime.now(), u"-" * 10))
             brand_tagger = BrandTagger(db=self.db, table=self.table)
             brand_tagger.main(category_id=self.category_id, date_range=self.date_range)
         if kwargs[u"material"]:
-            print u"{0} {1} 开始执行MaterialTagger {1}".format(datetime.now(), u"-" * 10)
+            info(u"{0} {1} 开始执行MaterialTagger {1}".format(datetime.now(), u"-" * 10))
             material_tagger = MaterialTagger(db=self.db, table=self.table)
             material_tagger.main(category_id=self.category_id, date_range=self.date_range)
         if kwargs[u"color"]:
-            print u"{0} {1} 开始执行ColorTagger {1}".format(datetime.now(), u"-" * 10)
+            info(u"{0} {1} 开始执行ColorTagger {1}".format(datetime.now(), u"-" * 10))
             color_tagger = ColorTagger(db=self.db, table=self.table)
             color_tagger.main(category_id=self.category_id, date_range=self.date_range)
 
@@ -566,7 +566,7 @@ class OneItemAttrTagger(AttrTagger):
             self.color_key_list = [u"颜色", u"颜色分类", u"主要颜色"]
         self.get_item_data()
         if len(self.items_attr_list) == 0:
-            print u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id)
+            info(u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id))
         self.process_data()
         self.format_tagged_item()
         self.update_tag()
@@ -587,7 +587,7 @@ class OneItemBrandTagger(BrandTagger):
         self.category_id = get_category_by_item_id(db=self.db, table=self.table, item_id=self.item_id)
         self.get_item_data()
         if len(self.items_attr_list) == 0:
-            print u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id)
+            info(u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id))
         self.process_data()
         self.format_tagged_item()
         self.update_tag()
@@ -608,7 +608,7 @@ class OneItemMaterialTagger(MaterialTagger):
         self.category_id = get_category_by_item_id(db=self.db, table=self.table, item_id=self.item_id)
         self.get_item_data()
         if len(self.items_attr_list) == 0:
-            print u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id)
+            info(u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id))
         self.process_data()
         self.format_tagged_item()
         self.update_tag()
@@ -633,7 +633,7 @@ class OneItemColorTagger(ColorTagger):
             self.color_key_list = [u"颜色", u"颜色分类", u"主要颜色"]
         self.get_item_data()
         if len(self.items_attr_list) == 0:
-            print u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id)
+            info(u"{0} 没有数据，跳过品类<{1}>".format(datetime.now(), self.category_id))
         self.process_data()
         self.format_tagged_item()
         self.update_tag()
