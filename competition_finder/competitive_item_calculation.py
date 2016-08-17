@@ -10,6 +10,7 @@ from sklearn.ensemble import GradientBoostingRegressor
 from common.db_apis import *
 from common.settings import *
 from common.pickle_helper import pickle_dump
+from common.debug_helper import info
 from datetime import datetime
 
 
@@ -17,7 +18,7 @@ class CalculateCompetitiveItems(object):
     # region 内部所有属性的初始化
     def __init__(self, industry=u"mp_women_clothing", source_table=u"itemmonthlysales2015",
                  target_table=u"itemmonthlyrelation_2015", shop_id=66098091, cid=1623):
-        print (u"{0} 正在连接数据库 ...".format(datetime.now()))
+        info(u"{0} 正在连接数据库 ...".format(datetime.now()))
         # region 必要
         self.industry = industry
         self.source_table = source_table
@@ -25,16 +26,16 @@ class CalculateCompetitiveItems(object):
         self.customer_shop_id = shop_id
         self.date_range = get_max_date_range(db=self.industry, table=self.source_table)
         self.date_range_list = None
-        print (u"{0} 正在获取品类信息... ".format(datetime.now()))
+        info(u"{0} 正在获取品类信息... ".format(datetime.now()))
         self.category_dict = {int(row[0]): row[1] for row in get_categories(db=self.industry)}
         self.category_id = cid
         # 用来将商品标签向量化
-        print (u"{0} 正在抽取标签元数据... ".format(datetime.now()))
+        info(u"{0} 正在抽取标签元数据... ".format(datetime.now()))
         self.attribute_meta = get_attribute_meta(db=self.industry)
         # self.items_attributes = None
         # key=CategoryID value=CategoryName
         # CID: CNAME
-        print (u"{0} 正在生成商品的标签dict... ".format(datetime.now()))
+        info(u"{0} 正在生成商品的标签dict... ".format(datetime.now()))
         self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"DisplayName", u"AttrValue"]])
         self.training_data = None
         self.train_x = None
@@ -82,11 +83,11 @@ class CalculateCompetitiveItems(object):
         按需训练
         :return:
         """
-        print (u"{0} 正在获取训练数据... ".format(datetime.now()))
+        info(u"{0} 正在获取训练数据... ".format(datetime.now()))
         self.training_data = get_training_data(cid=self.category_id)
         # 构造训练数据
         # training_data: attr1, attr2, score
-        print (u"{0} 正在构造训练数据的特征矩阵... ".format(datetime.now()))
+        info(u"{0} 正在构造训练数据的特征矩阵... ".format(datetime.now()))
         self.train_x, self.train_y = construct_train_feature(raw_data=self.training_data.values.tolist(),
                                                              tag_dict=self.tag_dict[self.category_id])
 
@@ -103,19 +104,19 @@ class CalculateCompetitiveItems(object):
         return
 
     def build_prediction_feature(self):
-        print (u"{0} 正在获取预测数据... ".format(datetime.now()))
+        info(u"{0} 正在获取预测数据... ".format(datetime.now()))
         # TaggedItemAttr, item_id, shop_id DataFrame
-        print (u"{0} 正在获取客户商品信息... ".format(datetime.now()))
+        info(u"{0} 正在获取客户商品信息... ".format(datetime.now()))
         self.customer_shop_items = get_customer_shop_items(
             db=self.industry, table=self.source_table, shop_id=self.customer_shop_id, date_range=self.date_range,
             category_id=self.category_id)
         # 构造预测数据
-        print (u"{0} 正在获取竞争对手数据... ".format(datetime.now()))
+        info(u"{0} 正在获取竞争对手数据... ".format(datetime.now()))
         # 获取客户店铺之外所有对应品类下的商品信息
         self.competitor_items = get_competitor_shop_items(
             db=self.industry, table=self.source_table, shop_id=self.customer_shop_id, category_id=self.category_id,
             date_range=self.date_range)
-        print (u"{0} 正在构造预测用数据的特征矩阵 品类是<{1}>, 月份为<{2}>... ".format(
+        info(u"{0} 正在构造预测用数据的特征矩阵 品类是<{1}>, 月份为<{2}>... ".format(
             datetime.now(), self.category_id, self.date_range))
         # 如果没有必要维度的品类
         essential_tag_dict = None
@@ -135,12 +136,12 @@ class CalculateCompetitiveItems(object):
     # region 模型训练和预测
     def train(self):
         model = GradientBoostingRegressor()
-        print (u"{0} 正在生成训练模型... ".format(datetime.now()))
+        info(u"{0} 正在生成训练模型... ".format(datetime.now()))
         self.model[self.category_dict[self.category_id]] = model.fit(self.train_x, self.train_y)
         return
 
     def predict(self):
-        print u"{0} predict_x 行数为{1}".format(datetime.now(), self.predict_x.shape[0])
+        info(u"{0} predict_x 行数为{1}".format(datetime.now(), self.predict_x.shape[0]))
         if self.predict_x.shape[0] > 0:
             self.predict_y = self.model[self.category_dict[self.category_id]].predict(self.predict_x)
             df_x = pd.DataFrame(self.predict_x)
@@ -160,17 +161,17 @@ class CalculateCompetitiveItems(object):
         delete_score(db=self.industry, table=self.target_table, shop_id=self.customer_shop_id,
                      category_id=self.category_id, date_range=self.date_range)
         if self.predict_x.shape[0] == 0:
-            print u"{0} 没有预测用的X，跳过品类{1}".format(datetime.now(), self.category_id)
+            info(u"{0} 没有预测用的X，跳过品类{1}".format(datetime.now(), self.category_id))
             return
         self.data_to_db = []
         for row in zip(self.item_pairs, self.predict_y):
             if row[1] >= 0.5:
                 self.data_to_db.append(
                     (self.customer_shop_id, row[0][0], row[0][1], round(row[1], 4), self.date_range, self.category_id))
-        print u"{0} 开始删除店铺ID={1},品类为<{2}>,月份为<{3}>的竞品数据...".format(
-            datetime.now(), self.customer_shop_id, self.category_id, self.date_range)
-        print u"{0} 开始将预测结果写入表{1}... 行数为{2}".format(
-            datetime.now(), self.target_table, len(self.data_to_db))
+        info(u"{0} 开始删除店铺ID={1},品类为<{2}>,月份为<{3}>的竞品数据...".format(
+            datetime.now(), self.customer_shop_id, self.category_id, self.date_range))
+        info(u"{0} 开始将预测结果写入表{1}... 行数为{2}".format(
+            datetime.now(), self.target_table, len(self.data_to_db)))
         set_scores(db=self.industry, table=self.target_table, args=self.data_to_db)
         self.statistic_info.append(
             {u"CID": self.category_id, u"DateRange": self.date_range, u"rows": len(self.data_to_db)})
@@ -230,7 +231,7 @@ if __name__ == u"__main__":
     #         min_value = value
     #     if max_value < value:
     #         max_value = value
-    # print u"min_value={0}, max_value={1}, avg_value={2}".format(min_value, max_value, sum_value / len(result))
+    # infou"min_value={0}, max_value={1}, avg_value={2}".format(min_value, max_value, sum_value / len(result))
 
 # coding: utf-8
 # from competitive_item_calculation import CalculateCompetitiveItems as CC
