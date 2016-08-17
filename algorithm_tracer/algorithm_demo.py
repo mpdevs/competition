@@ -7,6 +7,7 @@ from datetime import datetime
 from competition_finder.competitive_item_calculation import CalculateCompetitiveItems as CalC
 from common.pickle_helper import pickle_load
 from common.settings import *
+from common.debug_helper import info
 
 
 class VerifyResult(CalC):
@@ -65,12 +66,12 @@ class VerifyResult(CalC):
                     self.essential_dimension_conflict = True
                     return False
             except KeyError as e:
-                print u"E 30001 raise exception:{0}".format(e)
+                info(u"E 30001 raise exception:{0}".format(e))
                 return True
             # self.feature_vector = make_similarity_feature(attr1, attr2, self.tag_dict[self.category_id])
             # return True
         except Exception as e:
-            print u"E3000 raise exception:{0}".format(str(e))
+            info(u"E3000 raise exception:{0}".format(str(e)))
             return False
 
     def predict(self):
