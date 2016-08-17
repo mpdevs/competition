@@ -10,7 +10,7 @@ TRAIN_X_POSITIVE_PICKLE = path.join(PICKLE_FILE_PATH, u"train_x_positive")
 TRAIN_X_NEGATIVE_PICKLE = path.join(PICKLE_FILE_PATH, u"train_x_negative")
 TEST_X_PICKLE = path.join(PICKLE_FILE_PATH, u"test_x")
 TAG_DICT_PICKLE = path.join(PICKLE_FILE_PATH, u"tag_dict")
-NAME_ATTRIBUTE_PICKLE = path.join(PICKLE_FILE_PATH, u"tag_dict")
+NAME_ATTRIBUTE_PICKLE = path.join(PICKLE_FILE_PATH, u"name_attribute")
 TAGGED_ITEMS_ATTR_LIST = path.join(PICKLE_FILE_PATH, u"tagged_items_attr_list")
 
 

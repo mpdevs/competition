@@ -22,38 +22,39 @@ class FeatureVectorDistributionHandler(ChartIndexHandler):
     """
     def __init__(self, application, request, **kwargs):
         super(FeatureVectorDistributionHandler, self).__init__(application, request, **kwargs)
-        self.train_x_positive = pickle_load(TRAIN_X_POSITIVE_PICKLE)
-        self.train_x_negative = pickle_load(TRAIN_X_NEGATIVE_PICKLE)
-        self.test_x_positive = pickle_load(TEST_X_PICKLE)
-        self.tag_dict = pickle_load(TAG_DICT_PICKLE)
-        # for k in self.train_x_positive.keys():
+        self.txp = pickle_load(TRAIN_X_POSITIVE_PICKLE)
+        self.txn = pickle_load(TRAIN_X_NEGATIVE_PICKLE)
+        self.tp = pickle_load(TEST_X_PICKLE)
+        self.td = pickle_load(TAG_DICT_PICKLE)
+        print type(self.td)
+        # for k in self.txp.keys():
         #     debug(k)
-        # debug(len(self.train_x_positive))
-        # for k in self.train_x_negative.keys():
+        # debug(len(self.txp))
+        # for k in self.txn.keys():
         #     debug(k)
-        # debug(len(self.train_x_negative))
-        # for k in self.test_x_positive.keys():
+        # debug(len(self.txn))
+        # for k in self.tp.keys():
         #     debug(k)
-        # debug(len(self.test_x_positive))
-        self.available_category = set(self.train_x_positive.keys()) & set(self.train_x_negative.keys())
-        self.available_category = list(self.available_category & set(self.test_x_positive.keys()))
-        # for category in self.available_category:
+        # debug(len(self.tp))
+        self.ac = set(self.txp.keys()) & set(self.txn.keys())
+        self.ac = list(self.ac & set(self.tp.keys()))
+        # for category in self.ac:
         #     print category
-        self.category = get_categories(db=u"mp_women_clothing", category_id_list=self.available_category)
-        self.category_id = None
+        self.category = get_categories(db=u"mp_women_clothing", category_id_list=self.ac)
+        self.cid = None
 
     def get(self, *args, **kwargs):
         category_id = int(self.get_argument(u"category_id", u"1623"))
-        self.category_id = category_id
+        self.cid = category_id
         train_x_positive_data = {}
         train_x_negative_data = {}
         test_x_data = {}
-        dimensions = self.tag_dict[self.category_id].keys()
+        dimensions = self.td[self.cid].keys()
         for i in xrange(len(dimensions)):
             dimension_name = dimensions[i]
-            train_x_positive = scatter_adapter(self.train_x_positive[self.category_id], i)
-            train_x_negative = scatter_adapter(self.train_x_negative[self.category_id], i)
-            test_x = scatter_adapter(self.test_x_positive[self.category_id], i)
+            train_x_positive = scatter_adapter(self.txp[self.cid], i)
+            train_x_negative = scatter_adapter(self.txn[self.cid], i)
+            test_x = scatter_adapter(self.tp[self.cid], i)
             train_x_positive_data[dimension_name] = train_x_positive
             train_x_negative_data[dimension_name] = train_x_negative
             test_x_data[dimension_name] = test_x
