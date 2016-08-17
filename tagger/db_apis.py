@@ -198,9 +198,9 @@ def get_ambiguous_attr_value(category_id):
     :param category_id:
     :return:  DataFrame
     """
-    df = pickle_load(file_name=NAME_ATTRIBUTE_PICKLE)
-    df = df[[u"CategoryID", u"CategoryName", u"AttrName", u"AttrValue", u"Flag"]]
-    return df[df.CategoryID == category_id]
+    ambiguous_attr_value = pickle_load(file_name=NAME_ATTRIBUTE_PICKLE)
+    ambiguous_attr_value = ambiguous_attr_value[[u"CategoryID", u"CategoryName", u"AttrName", u"AttrValue", u"Flag"]]
+    return ambiguous_attr_value[ambiguous_attr_value.CategoryID == category_id]
 
 
 def attr_value_reorder():

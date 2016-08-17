@@ -79,9 +79,6 @@ class VerifyResult(CalC):
     def show_process_and_result(self):
         debug(u"{0} 开始数据比较...".format(datetime.now()))
         items = self.competitive_item_pair_data.values
-        print len(items)
-        for i in items:
-            print i
         self.item1, self.item2 = items[0], items[1]
         if self.pair_type == u"predict":
             debug(u"商品1的信息:\nid={0}\n标签={1}\n价格={2}\n品类={3}\n日期={4}\n".format(
