@@ -665,7 +665,7 @@ class OneItemTagger(object):
 if __name__ == u"__main__":
     from tqdm import tqdm
     _db = u"mp_women_clothing"
-    _table = u"TaggedItemAttr"
+    _table = u"itemmonthlysales2015"
     _item_id = 525316560097
     # _category_id = 1623
     for _category_id in tqdm([int(row[0]) for row in get_categories(db=_db, category_id_list=[])]):

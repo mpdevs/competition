@@ -7,13 +7,13 @@
     <h2>竟品计算</h2>
     <table width="100%" border="1px" style="text-align: center">
         <tr>
-            <th>
+            <th colspan="2">
                 <div>
                     <h4>SourceItem:{{ si[0] }}</h4>
                     <h5>Attr: {{ si[1] }}</h5>
                 </div>
             </th>
-            <th>
+            <th colspan="2">
                 <div>
                     <h4>TargetItem:{{ ti[0] }}</h4>
                     <h5>Attr: {{ ti[1] }}</h5>
@@ -21,7 +21,7 @@
             </th>
         </tr>
         <tr>
-            <th colspan="2">
+            <th colspan="4">
                 <div class="main-content-middle">
                     <h4>Feature Vector (demo version):</h4>
                     <h5>{{ fv }}</h5>
@@ -31,7 +31,7 @@
             </th>
         </tr>
         <tr>
-            <th>
+            <th colspan="2">
                 <div id="fv-expand"; style="width:50%; height:300px; float:left">
                     <h4>相似度特征向量</h4>
                     <ul>
@@ -47,20 +47,24 @@
                     </ul>
                 </div>
             </th>
-            <th>
-                <div style="width:50%; height:300px; display:inline">
+            <th colspan="1">
+                <div style="width:25%; height:300px; display:inline">
                     <p>SourceItem</p>
-                        {% if len(si[2]) < 2 %}
-                            <a href= "{{ 'https://item.taobao.com/item.htm?id={0}'.format(si[0]) }}" target="view_frame" >SourceItemUrl</a>
-                        {% elif len(si[2]) > 2 %}
-                            <img id="p1" src={{ si[2] }} height="200" width="200"/>
-                        {% end if %}
+                    {% if len(si[2]) < 2 %}
+                    <a href= "{{ 'https://item.taobao.com/item.htm?id={0}'.format(si[0]) }}" target="view_frame" >SourceItemUrl</a>
+                    {% elif len(si[2]) > 2 %}
+                    <img id="p1" src={{ si[2] }} height="200" width="200"/>
+                    {% end if %}
+                </div>
+            </th>
+            <th colspan="1">
+                <div style="width:25%; height:300px; display:inline">
                     <p>TargetItem</p>
-                        {% if len(ti[2]) < 2 %}
-                            <a href="{{ 'https://item.taobao.com/item.htm?id={0}'.format(ti[0]) }}" target="view_frame" >TargetItemUrl</a>
-                        {% elif len(ti[2]) > 2 %}
-                            <img id="p2" src={{ ti[2] }} height="200" width="200"/>
-                        {% end if %}
+                    {% if len(ti[2]) < 2 %}
+                    <a href="{{ 'https://item.taobao.com/item.htm?id={0}'.format(ti[0]) }}" target="view_frame" >TargetItemUrl</a>
+                    {% elif len(ti[2]) > 2 %}
+                    <img id="p2" src={{ ti[2] }} height="200" width="200"/>
+                    {% end if %}
                 </div>
             </th>
         </tr>
