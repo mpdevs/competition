@@ -13,11 +13,14 @@ from common.pickle_helper import pickle_dump
 from common.debug_helper import info
 from datetime import datetime
 
+import sys
+reload(sys)
+sys.setdefaultencoding("utf8")
 
 class CalculateCompetitiveItems(object):
     # region 内部所有属性的初始化
     def __init__(self, industry=u"mp_women_clothing", source_table=u"itemmonthlysales2015",
-                 target_table=u"itemmonthlyrelation_2015", shop_id=66098091, cid=1623):
+                 target_table=u"itemmonthlyrelation_2015", shop_id=None, cid=1623):
         info(u"{0} 正在连接数据库 ...".format(datetime.now()))
         # region 必要
         self.industry = industry
@@ -36,7 +39,7 @@ class CalculateCompetitiveItems(object):
         # key=CategoryID value=CategoryName
         # CID: CNAME
         info(u"{0} 正在生成商品的标签dict... ".format(datetime.now()))
-        self.tag_dict = tag_to_dict(df=self.attribute_meta[[u"CID", u"DisplayName", u"AttrValue"]])
+        self.tag_dict = tag_to_dict(df=transform_attr_value_dict(self.attribute_meta))
         self.training_data = None
         self.train_x = None
         self.train_x_positive = dict()
@@ -87,9 +90,22 @@ class CalculateCompetitiveItems(object):
         self.training_data = get_training_data(cid=self.category_id)
         # 构造训练数据
         # training_data: attr1, attr2, score
-        info(u"{0} 正在构造训练数据的特征矩阵... ".format(datetime.now()))
+        info(u"{0} 正在构造训练数据的特征矩阵, 行数为{1}... ".format(datetime.now(), len(self.training_data)))
+        print self.category_id
         self.train_x, self.train_y = construct_train_feature(raw_data=self.training_data.values.tolist(),
                                                              tag_dict=self.tag_dict[self.category_id])
+
+        #reload(sys)
+        #sys.setdefaultencoding("utf8")
+        col = []
+        # print self.category_id
+        for i in self.tag_dict[self.category_id].keys():
+            col.append(i)
+            # print i
+        # print "length of col: ", len(col)
+        csv_name = "train_" + str(self.category_id) + ".csv"
+        pd.DataFrame(self.train_x).to_csv(csv_name, header=col)
+
 
         # region 用于echarts展示
         train_x_demo, train_y_demo = construct_train_feature(raw_data=self.training_data.values.tolist(),
@@ -101,6 +117,8 @@ class CalculateCompetitiveItems(object):
         self.train_x_negative[self.category_id] = df[df.y <= 0.5].values
         # endregion
         self.train_x, self.train_y = sample_balance(train_x=self.train_x, train_y=self.train_y)
+
+
         return
 
     def build_prediction_feature(self):
@@ -114,7 +132,7 @@ class CalculateCompetitiveItems(object):
         info(u"{0} 正在获取竞争对手数据... ".format(datetime.now()))
         # 获取客户店铺之外所有对应品类下的商品信息
         self.competitor_items = get_competitor_shop_items(
-            db=self.industry, table=self.source_table, shop_id=self.customer_shop_id, category_id=self.category_id,
+            db=self.industry, table=self.source_table, category_id=self.category_id,
             date_range=self.date_range)
         info(u"{0} 正在构造预测用数据的特征矩阵 品类是<{1}>, 月份为<{2}>... ".format(
             datetime.now(), self.category_id, self.date_range))
@@ -167,7 +185,7 @@ class CalculateCompetitiveItems(object):
         for row in zip(self.item_pairs, self.predict_y):
             if row[1] >= 0.5:
                 self.data_to_db.append(
-                    (self.customer_shop_id, row[0][0], row[0][1], round(row[1], 4), self.date_range, self.category_id))
+                    (0, row[0][0], row[0][1], round(row[1], 4), self.date_range, self.category_id))
         info(u"{0} 开始删除店铺ID={1},品类为<{2}>,月份为<{3}>的竞品数据...".format(
             datetime.now(), self.customer_shop_id, self.category_id, self.date_range))
         info(u"{0} 开始将预测结果写入表{1}... 行数为{2}".format(

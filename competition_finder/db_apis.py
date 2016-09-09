@@ -6,6 +6,14 @@ from math import ceil
 from datetime import datetime
 from sql_constant import *
 from common.mysql_helper import connect_db, MySQLDBPackage as MySQL
+from common.debug_helper import debug
+
+
+def generate_shop_filter(shop_id):
+    shop_id_filter = u""
+    if shop_id:
+        shop_id_filter = u" shop_id = {0} AND ".format()
+    return shop_id_filter
 
 
 def get_item_attributes(db=u"mp_women_clothing", limits=u""):
@@ -13,20 +21,25 @@ def get_item_attributes(db=u"mp_women_clothing", limits=u""):
 
 
 def get_training_data(cid, db=u"mp_women_clothing"):
+    debug(u"训练数据获取query:{0}".format(TRAINING_DATA_QUERY.format(cid)))
     return pd.read_sql_query(TRAINING_DATA_QUERY.format(cid), connect_db(db))
 
 
-def get_customer_shop_items(db, table, category_id, date_range, shop_id=66098091):
-    return pd.read_sql_query(CUSTOMER_ITEM_QUERY.format(table, shop_id, category_id, date_range), connect_db(db))
+def get_customer_shop_items(db, table, category_id, date_range, shop_id):
+    shop_filter = u""
+    if shop_id:
+        shop_filter = u" ShopID = {0} AND ".format(shop_id)
+    return pd.read_sql_query(CUSTOMER_ITEM_QUERY.format(table, shop_filter, category_id, date_range), connect_db(db))
 
 
-def get_competitor_shop_items(db, table, category_id, date_range, shop_id=66098091):
-    return pd.read_sql_query(COMPETITIVE_ITEM_QUERY.format(table, shop_id, category_id, date_range), connect_db(db))
+def get_competitor_shop_items(db, table, category_id, date_range):
+    return pd.read_sql_query(COMPETITIVE_ITEM_QUERY.format(
+        table, category_id, date_range), connect_db(db))
 
 
-def delete_score(db, table, category_id, date_range, shop_id=66098091):
+def delete_score(db, table, category_id, date_range, shop_id):
     db_connection = MySQL()
-    db_connection.execute(DELETE_SCORES_QUERY.format(db, table, shop_id, category_id, date_range))
+    db_connection.execute(DELETE_SCORES_QUERY.format(db, table, generate_shop_filter(shop_id), category_id, date_range))
     return
 
 

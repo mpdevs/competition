@@ -14,14 +14,14 @@ NAME_ATTRIBUTE_PICKLE = path.join(PICKLE_FILE_PATH, u"name_attribute")
 TAGGED_ITEMS_ATTR_LIST = path.join(PICKLE_FILE_PATH, u"tagged_items_attr_list")
 
 
-DEBUG = False
-INFO = False
+DEBUG = True
+INFO = True
 WARNING = True
 ERROR = True
 FATAL = True
 
 
-HOST = u"192.168.1.120"
+HOST = u"172.16.1.120"
 USER = u"dev"
 PASSWD = u"Dev_123123"
 DB = u"mp_portal"

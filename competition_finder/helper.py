@@ -12,6 +12,12 @@ sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from common.debug_helper import debug
 
 
+def transform_attr_value_dict(df):
+    df = df[df.Flag == u"A"]
+    df = df[[u"CID", u"DisplayName", u"AttrValue"]]
+    return df
+
+
 def tag_to_dict(df):
     """
     用于竟品计算
