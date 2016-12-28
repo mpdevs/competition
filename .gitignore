@@ -5,3 +5,13 @@
 *.bmg
 *.txt
 *.csv
+*.config
+*.exe
+*.manifest
+*.sln
+*.cs
+*.pyc
+*.7z
+*.csproj
+*.zip
+*.rar

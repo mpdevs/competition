@@ -16,23 +16,29 @@ def get_assignment(subject):
     :return:
     """
     assignments_place = path.join(path.join(path.dirname(__file__), u"assignments"), subject)
-
+    print assignments_place
     answers = []
     unfinished_assignment = set()
-
     for place, chapters, assignments in walk(assignments_place):
         # print u"root={0},dirs={1},files={2}".format(place, chapter, assignments)
         for assignment in assignments:
             assignment = path.join(place, assignment)
             subject = path.basename(path.dirname(assignment))
-            lesson, student = path.splitext(path.basename(assignment))[0].split(u"_")[:-1]
+            lesson, student = path.splitext(path.basename(assignment))[0].split(u"_")[:2]
             with open(assignment) as content:
                 for line in content:
                     try:
                         source_item, target_item, score = line.replace(u"\r", u"").replace(u"\n", u"").split(u"\t")
                         # 1，2算同位，3算异位
-                        score = 1 if int(score) <= 2 else 0
-                        answers.append((subject, lesson, student, source_item, target_item, score))
+                        if int(score) == 0: # skipped the one without pics
+                            score = -10
+                        elif int(score) <= 2:
+                            score = 1
+                        else:
+                            score = 0
+                        # score = 1 if (int(score) <= 2) and (int(score) > 0) else
+
+                        answers.append((subject, lesson, student, source_item.replace(" ", ""), target_item.replace(" ", ""), score))
                     except ValueError:
                         unfinished_assignment.add(assignment)
     answers = DataFrame(data=answers,
@@ -43,24 +49,26 @@ def get_assignment(subject):
     return answers
 
 
-def set_evaluations(db, args):
+def db_set_evaluations(db, args):
     """
     :param db:
     :param args:
     :return:
     """
+    batch_length = 100
     db_connection = MySQL()
     row_count = len(args)
-    batch = int(ceil(float(row_count) / 100))
+    batch = int(ceil(float(row_count) / batch_length))
     for size in range(batch):
-        start_index = size * 100
-        end_index = min((size + 1) * 100, row_count)
+        start_index = size * batch_length
+        end_index = min((size + 1) * batch_length, row_count)
         data = args[start_index: end_index]
+        # print data
         db_connection.execute_many(sql=SET_EVALUATIONS_QUERY.format(db), args=data)
     return
 
 
-def delete_evaluations(db, category_id):
+def db_delete_evaluations(db, category_id):
     db_connection = MySQL()
     db_connection.execute(DELETE_EVALUATIONS_QUERY.format(db, category_id))
     return

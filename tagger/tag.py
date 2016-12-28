@@ -67,7 +67,7 @@ class AttrTagger(object):
         self.parsed_item = None  # 当前正在处理的商品标签字典
         self.tagged_items_attr_list = []  # 已完成打标签工作的列表
         self.error_list = []  # 异常列表
-        self.incremental = True  # 是否增量
+        self.incremental = False  # 是否增量
         self.tag_column = u"TaggedItemAttr"  # 需要打标签的字段
         self.potential_new_attr_value_list = []  # 可能是新的维度值的列表，用于字典的维护
         self.processed_item_id_list = []  # 这是一个中间的变量
@@ -85,7 +85,7 @@ class AttrTagger(object):
         self.attribute_value_list = get_tag_attribute_meta(db=self.db, category_id=self.category_id)
         self.make_dimension_list()
         self.attribute_value_list = self.attribute_value_list[[u"DisplayName", u"AttrValue"]]
-        self.ambiguous_attr_value_df = get_ambiguous_attr_value(category_id=self.category_id)
+        # self.ambiguous_attr_value_df = get_ambiguous_attr_value(category_id=self.category_id)
         return
 
     def make_dimension_list(self):
@@ -665,7 +665,7 @@ class OneItemTagger(object):
 if __name__ == u"__main__":
     from tqdm import tqdm
     _db = u"mp_women_clothing"
-    _table = u"itemmonthlysales2015"
+    _table = u"itemmonthlysales_201607"
     _item_id = 525316560097
     # _category_id = 1623
     for _category_id in tqdm([int(row[0]) for row in get_categories(db=_db, category_id_list=[])]):

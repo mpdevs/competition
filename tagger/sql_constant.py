@@ -46,7 +46,7 @@ TAG_DICT_QUERY = u"""SELECT AttrName FROM mp_portal.attr_value WHERE CID = {0} A
 UNION SELECT DisPlayName FROM mp_portal.attr_value WHERE CID = {0}  AND IsTag = 'y';"""
 
 
-SET_ATTR_QUERY = u"UPDATE {0}.{1} SET {2} = %s, NeedReTag = 'n' WHERE ItemID = %s"
+SET_ATTR_QUERY = u"UPDATE {0}.{1} SET {2} = %s WHERE ItemID = %s"
 
 
 BRAND_QUERY = u"""SELECT b.AttrBrandName, CONCAT(b.AttrBrandName, ',', b.TitleBrandName) AS TitleBrandName

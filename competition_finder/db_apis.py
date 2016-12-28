@@ -20,15 +20,26 @@ def get_item_attributes(db=u"mp_women_clothing", limits=u""):
     return pd.read_sql_query(ATTRIBUTES_QUERY.format(u"TaggedItemAttr", limits), connect_db(db))
 
 
+def get_result_data(cid, db=u"mp_women_clothing"):
+    print RESULT_DATA_QUERY.format(cid)
+    return pd.read_sql_query(RESULT_DATA_QUERY.format(cid), connect_db(db))
+
+
 def get_training_data(cid, db=u"mp_women_clothing"):
     debug(u"训练数据获取query:{0}".format(TRAINING_DATA_QUERY.format(cid)))
     return pd.read_sql_query(TRAINING_DATA_QUERY.format(cid), connect_db(db))
+
+
+def get_new_training_data(cid, db=u"mp_women_clothing"):
+    debug(u"训练数据获取query:{0}".format(NEW_TRAINING_DATA_QUERY.format(cid)))
+    return pd.read_sql_query(NEW_TRAINING_DATA_QUERY.format(cid), connect_db(db))
 
 
 def get_customer_shop_items(db, table, category_id, date_range, shop_id):
     shop_filter = u""
     if shop_id:
         shop_filter = u" ShopID = {0} AND ".format(shop_id)
+    print CUSTOMER_ITEM_QUERY.format(table, shop_filter, category_id, date_range)
     return pd.read_sql_query(CUSTOMER_ITEM_QUERY.format(table, shop_filter, category_id, date_range), connect_db(db))
 
 
@@ -96,7 +107,8 @@ def get_essential_dimensions(db=u"mp_women_clothing"):
     :return: OrderedDict
     """
     threshold = 0.75
-    confidence = 6
+    confidence = 5
+    print ESSENTIAL_DIMENSIONS_QUERY.format(threshold, confidence)
     return pd.read_sql_query(ESSENTIAL_DIMENSIONS_QUERY.format(threshold, confidence), connect_db(db))
 
 

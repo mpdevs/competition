@@ -2,6 +2,7 @@
 # __author__: "John"
 from db_apis import *
 from helper import *
+from common.pickle_helper import pickle_dump
 from datetime import datetime
 import os
 os.sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -41,15 +42,15 @@ class TeachTaggingClass(object):
         :return:
         """
         self.students = len(df.student.unique().tolist())
-        self.evaluations = score_mean(df=df[[u"source_item", u"target_item", u"score"]], subject_id=self.subject_id)
-        return
+        evaluations = score_mean(df=df[[u"source_item", u"target_item", u"score"]], subject_id=self.subject_id)
+        return evaluations
 
     def delete_evaluations(self):
-        delete_evaluations(db=self.db, category_id=self.subject_id)
+        db_delete_evaluations(db=self.db, category_id=self.subject_id)
         return
 
     def set_evaluations(self):
-        set_evaluations(db=self.db, args=self.evaluations)
+        db_set_evaluations(db=self.db, args=self.evaluations)
         return
 
     def main(self):
@@ -60,10 +61,20 @@ class TeachTaggingClass(object):
                 self.subject_id = subject_id
                 print u"{0} 正在评估科目<{1}>".format(datetime.now(), subject)
                 self.delete_evaluations()
+
                 for lesson in lessons:
+                    print lesson
                     self.todo_df = self.data[(self.data.subject == subject) & (self.data.lesson == lesson)]
-                    self.evaluate_assignment(df=self.todo_df)
+                    # if lesson != u"12label":
+                    #     continue
+                    # pickle_dump(u"evaluations", self.todo_df)
+                    self.evaluations = self.evaluate_assignment(df=self.todo_df)
                     self.set_evaluations()
+                    # for line in self.evaluations:
+                    #     source_item, target_item, score, category = line
+                    #     # if unicode(source_item) == unicode(530228506892) and unicode(target_item) == unicode(528079644281):
+                    #     #     print lesson, " get"
+
             except KeyError:
                 print u"{0} 科目<{1}>没有找到category_id号，跳过".format(datetime.now(), subject)
                 continue
