@@ -158,8 +158,8 @@ class CalculateCompetitiveItems(object):
         获取人工标注结果
         :return:
         """
-        result = get_result_data(cid=self.category_id)
-        result.to_csv('result{0}.csv'.format(self.category_id), encoding='utf8')
+        ret = get_result_data(cid=self.category_id)
+        ret.to_csv('result{0}.csv'.format(self.category_id), encoding='utf8')
 
         return
 
@@ -177,7 +177,10 @@ class CalculateCompetitiveItems(object):
         self.training_data = pd.concat([self.training_data, self.new_training_data], ignore_index=True)
         self.training_data.columns = ['attr1', 'attr2', 'score', 'ItemID', 'ItemID2']
 
-        self.training_data = self.training_data.sort_values([self.training_data.columns[3], self.training_data.columns[4]])
+        self.training_data = self.training_data.sort_values(
+            [self.training_data.columns[3], self.training_data.columns[4]]
+        )
+
         self.training_data.iloc[:, 3:5].astype(long)
 
         debug('before remove duplicates len of training set: {0}'.format(len(self.training_data)))
@@ -204,18 +207,6 @@ class CalculateCompetitiveItems(object):
         debug(training_set.shape)
 
         export_csv(training_set, "train_{0}.csv".format(self.category_id), header=col)
-
-        # region 用于echarts展示
-        # train_x_demo, train_y_demo, id, id2, attr1, attr2 = construct_train_feature(raw_data=self.training_data.values.tolist(),
-        #                                                      tag_dict=self.tag_dict[self.category_id], demo=True)
-        # df_x = pd.DataFrame(train_x_demo)
-        # df_y = pd.DataFrame(train_y_demo, columns=["y"])
-        # df = pd.concat([df_x, df_y], axis=1, join_axes=[df_x.index])
-        # self.train_x_positive[self.category_id] = df[df.y > 0.5].values
-        # self.train_x_negative[self.category_id] = df[df.y <= 0.5].values
-        # self.train_x, self.train_y = sample_balance(train_x=self.train_x, train_y=self.train_y)
-        # endregion
-
         return
 
     def build_train_negative_feature(self):
@@ -269,11 +260,6 @@ class CalculateCompetitiveItems(object):
         )
 
         train_negative = pd.concat([attr1_train_negative, attr2_train_negative], ignore_index=True)
-
-        # region 清理内存
-        attr1_train_negative = None
-        attr2_train_negative = None
-        # endregion
 
         export_csv(train_negative, 'attr_train_negative_full_{0}.csv'.format(self.category_id))
 
@@ -507,11 +493,6 @@ class CalculateCompetitiveItems(object):
         prediction_full_features = pd.concat([prediction_set.iloc[:, 3:], prediction_distance.iloc[:, 2:]], axis=1)
         prediction_full_features.fillna(0, inplace=True)
 
-        # region 手動釋放RAM
-        prediction_distance = None
-        prediction_set = None
-        # endregion
-
         attr, dummy, test = read_csv_data(
             is_training_set=False,
             category=self.category_id
@@ -567,7 +548,6 @@ class CalculateCompetitiveItems(object):
                     info('{0} does not have predict proba'.format(key))
                     prob = pd.Series(model.predict(prediction_full_features))
 
-                # prediction = pd.concat([prediction, p], axis=1)
                 prediction_proba = pd.concat([prediction_proba, prob], axis=1)
 
                 # Print Feature Importance
@@ -578,34 +558,8 @@ class CalculateCompetitiveItems(object):
             prediction_proba_dict[self.category_id] = prediction_proba
             line()
 
-        export_csv(prediction_proba_dict[self.category_id], 'prediction_proba_' + str(self.category_id) + '.csv')
+        export_csv(prediction_proba_dict[self.category_id], 'prediction_proba_{0}.csv'.format(self.category_id))
         info('Done')
-    # endregion
-
-    # region 入库
-    # def set_data(self):
-    #     """
-    #     将最后的score更新到数据库中, 分数要在0.5以上
-    #     :return:
-    #     """
-    #     delete_score(db=self.industry, table=self.target_table, shop_id=self.customer_shop_id,
-    #                  category_id=self.category_id, date_range=self.date_range)
-    #     if self.predict_x.shape[0] == 0:
-    #         info("{0} 没有预测用的X，跳过品类{1}".format(datetime.now(), self.category_id))
-    #         return
-    #     self.data_to_db = []
-    #     for row in zip(self.item_pairs, self.predict_y):
-    #         if row[1] >= 0.5:
-    #             self.data_to_db.append(
-    #                 (0, row[0][0], row[0][1], round(row[1], 4), self.date_range, self.category_id))
-    #     info("{0} 开始删除店铺ID={1},品类为<{2}>,月份为<{3}>的竞品数据...".format(
-    #         datetime.now(), self.customer_shop_id, self.category_id, self.date_range))
-    #     info("{0} 开始将预测结果写入表{1}... 行数为{2}".format(
-    #         datetime.now(), self.target_table, len(self.data_to_db)))
-    #     set_scores(db=self.industry, table=self.target_table, args=self.data_to_db)
-    #     self.statistic_info.append(
-    #         {"CID": self.category_id, "DateRange": self.date_range, "rows": len(self.data_to_db)})
-    #     return
     # endregion
 
     # region 程序入口
@@ -639,4 +593,3 @@ class CalculateCompetitiveItems(object):
 if __name__ == "__main__":
     c = CalculateCompetitiveItems()
     c.main()
-
